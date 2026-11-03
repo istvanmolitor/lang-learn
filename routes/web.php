@@ -22,6 +22,8 @@ Route::middleware('auth')->group(function () {
 
     Route::resource('cards', CardController::class);
     Route::resource('card-groups', CardGroupController::class);
+    Route::get('card-groups/{cardGroup}/export', [CardGroupController::class, 'export'])->name('card-groups.export');
+    Route::post('card-groups/{cardGroup}/import', [CardGroupController::class, 'import'])->name('card-groups.import');
 });
 
 require __DIR__.'/auth.php';

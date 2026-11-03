@@ -2,6 +2,8 @@
 
 namespace Database\Seeders;
 
+use App\Enums\LanguageLevel;
+use App\Models\Language;
 use App\Models\User;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
@@ -17,11 +19,20 @@ class DatabaseSeeder extends Seeder
     {
         $this->call(LanguageSeeder::class);
 
-        // User::factory(10)->create();
+        $hungarian = Language::query()->where('code', 'hu')->first();
+        $english = Language::query()->where('code', 'en')->first();
 
-        User::factory()->create([
+        $admin = User::factory()->create([
             'name' => 'Test User',
             'email' => 'test@example.com',
+            'language_id' => $hungarian?->id,
+            'selected_language_id' => $english?->id,
         ]);
+
+        if ($english) {
+            $admin->languages()->attach($english->id, ['level' => LanguageLevel::B1]);
+        }
+
+        $this->call(CardGroupSeeder::class);
     }
 }

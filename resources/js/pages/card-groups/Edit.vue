@@ -1,5 +1,9 @@
 <script setup lang="ts">
-import { update } from '@/actions/App/Http/Controllers/CardGroupController';
+import {
+    exportMethod,
+    importMethod,
+    update,
+} from '@/actions/App/Http/Controllers/CardGroupController';
 import { Head, Link, useForm } from '@inertiajs/vue3';
 
 const props = defineProps<{
@@ -15,6 +19,20 @@ const form = useForm({
 
 function submit() {
     form.put(update.url(props.group.id));
+}
+
+const importForm = useForm({
+    file: null as File | null,
+});
+
+function onFileChange(event: Event) {
+    importForm.file = (event.target as HTMLInputElement).files?.[0] ?? null;
+}
+
+function submitImport() {
+    importForm.post(importMethod.url(props.group.id), {
+        forceFormData: true,
+    });
 }
 </script>
 
@@ -63,6 +81,59 @@ function submit() {
                         {{ form.processing ? 'Mentés...' : 'Mentés' }}
                     </button>
                 </form>
+            </div>
+
+            <div
+                class="mt-6 w-full rounded-lg bg-white p-6 shadow-[inset_0px_0px_0px_1px_rgba(26,26,0,0.16)] dark:bg-[#161615] dark:text-[#EDEDEC] dark:shadow-[inset_0px_0px_0px_1px_#fffaed2d]"
+            >
+                <h2 class="mb-6 font-medium">Import / export</h2>
+
+                <div class="flex flex-col gap-6">
+                    <div class="flex flex-col gap-1">
+                        <span class="text-sm font-medium">Exportálás</span>
+                        <a
+                            :href="exportMethod.url(group.id)"
+                            class="inline-block w-fit rounded-sm border border-[#e3e3e0] px-5 py-1.5 text-sm leading-normal hover:border-[#1b1b18] dark:border-[#3E3E3A] dark:hover:border-[#EDEDEC]"
+                        >
+                            CSV letöltése
+                        </a>
+                    </div>
+
+                    <form
+                        class="flex flex-col gap-1"
+                        @submit.prevent="submitImport"
+                    >
+                        <label for="import-file" class="text-sm font-medium"
+                            >Importálás CSV fájlból</label
+                        >
+                        <input
+                            id="import-file"
+                            type="file"
+                            accept=".csv,text/csv"
+                            class="text-sm"
+                            @change="onFileChange"
+                        />
+                        <div
+                            v-if="importForm.errors.file"
+                            class="text-sm text-[#f53003] dark:text-[#FF4433]"
+                        >
+                            {{ importForm.errors.file }}
+                        </div>
+                        <button
+                            type="submit"
+                            :disabled="
+                                importForm.processing || !importForm.file
+                            "
+                            class="mt-2 inline-block w-fit rounded-sm border border-[#e3e3e0] px-5 py-1.5 text-sm leading-normal hover:border-[#1b1b18] disabled:opacity-50 dark:border-[#3E3E3A] dark:hover:border-[#EDEDEC]"
+                        >
+                            {{
+                                importForm.processing
+                                    ? 'Importálás...'
+                                    : 'Importálás'
+                            }}
+                        </button>
+                    </form>
+                </div>
             </div>
         </div>
     </div>
