@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { Head } from '@inertiajs/vue3';
+import { destroy } from '@/actions/App/Http/Controllers/Auth/AuthenticatedSessionController';
+import { Head, Link } from '@inertiajs/vue3';
 </script>
 
 <template>
@@ -10,6 +11,12 @@ import { Head } from '@inertiajs/vue3';
     <div
         class="flex min-h-screen flex-col items-center bg-[#FDFDFC] p-6 text-[#1b1b18] lg:justify-center lg:p-8 dark:bg-[#0a0a0a]"
     >
+        <Link
+            :href="destroy()"
+            class="self-end text-sm text-[#706f6c] underline underline-offset-4 hover:text-[#1b1b18] dark:text-[#A1A09A] dark:hover:text-[#EDEDEC]"
+        >
+            Kijelentkezés
+        </Link>
         <div
             class="flex w-full items-center justify-center opacity-100 transition-opacity duration-750 lg:grow starting:opacity-0"
         >
