@@ -11,6 +11,7 @@ use App\Models\User;
 use App\Services\SpacedRepetitionScheduler;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Collection;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -24,11 +25,13 @@ class LearnController extends Controller
         $user = request()->user();
         $user->loadMissing(['selectedLanguage', 'nativeLanguage']);
 
-        $card = $this->nextCardFor($cardGroup, $user);
+        $cards = $cardGroup->cardsWithLatestReviewFor($user);
+        $card = $this->nextCardFrom($cards);
 
         return Inertia::render('learn/Show', [
             'group' => $cardGroup->only('id', 'name'),
             'card' => $card ? $this->cardPayload($card, $user) : null,
+            'progress' => CardGroup::progressPercentage($cards),
         ]);
     }
 
@@ -62,13 +65,11 @@ class LearnController extends Controller
 
     /**
      * Pick the card that is due soonest for the user, giving unreviewed cards priority.
+     *
+     * @param  Collection<int, Card>  $cards
      */
-    private function nextCardFor(CardGroup $cardGroup, User $user): ?Card
+    private function nextCardFrom(Collection $cards): ?Card
     {
-        $cards = $cardGroup->cards()
-            ->with(['translations.language', 'reviews' => fn ($query) => $query->where('user_id', $user->id)->latest('id')->limit(1)])
-            ->get();
-
         return $cards->sortBy(function (Card $card) {
             $latestReview = $card->reviews->first();
 

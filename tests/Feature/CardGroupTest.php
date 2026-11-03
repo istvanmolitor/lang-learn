@@ -2,12 +2,36 @@
 
 use App\Models\Card;
 use App\Models\CardGroup;
+use App\Models\CardReview;
 use App\Models\Language;
 use App\Models\User;
 use Illuminate\Http\UploadedFile;
 
 test('guests cannot view the card groups page', function () {
     $this->get(route('card-groups.index'))->assertRedirect(route('login'));
+});
+
+test('the card groups page reports the percentage of cards the user currently knows in each group', function () {
+    $user = User::factory()->create();
+    $group = CardGroup::factory()->create();
+
+    $known = Card::factory()->create();
+    $known->groups()->attach($group);
+    CardReview::factory()->create([
+        'user_id' => $user->id,
+        'card_id' => $known->id,
+        'repetitions' => 1,
+    ]);
+
+    $unknown = Card::factory()->create();
+    $unknown->groups()->attach($group);
+
+    $response = $this->actingAs($user)->get(route('card-groups.index'));
+
+    $response->assertInertia(fn ($page) => $page
+        ->component('card-groups/Index')
+        ->where('groups.0.progress', 50)
+    );
 });
 
 test('users can create a card group', function () {

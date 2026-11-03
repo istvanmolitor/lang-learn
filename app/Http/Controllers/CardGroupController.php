@@ -22,6 +22,8 @@ class CardGroupController extends Controller
      */
     public function index(): Response
     {
+        $user = request()->user();
+
         return Inertia::render('card-groups/Index', [
             'groups' => CardGroup::query()
                 ->withCount('cards')
@@ -31,6 +33,7 @@ class CardGroupController extends Controller
                     'id' => $group->id,
                     'name' => $group->name,
                     'cards_count' => $group->cards_count,
+                    'progress' => $group->progressPercentageFor($user),
                 ]),
         ]);
     }

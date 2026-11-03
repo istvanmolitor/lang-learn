@@ -39,6 +39,37 @@ test('the learn page shows the card text in the languages the user knows and is 
     );
 });
 
+test('the learn page reports the percentage of cards the user currently knows', function () {
+    $user = User::factory()->create();
+    $group = CardGroup::factory()->create();
+
+    $known = Card::factory()->create();
+    $known->groups()->attach($group);
+    CardReview::factory()->create([
+        'user_id' => $user->id,
+        'card_id' => $known->id,
+        'repetitions' => 1,
+    ]);
+
+    $unknown = Card::factory()->create();
+    $unknown->groups()->attach($group);
+    CardReview::factory()->create([
+        'user_id' => $user->id,
+        'card_id' => $unknown->id,
+        'repetitions' => 0,
+    ]);
+
+    $neverReviewed = Card::factory()->create();
+    $neverReviewed->groups()->attach($group);
+
+    $response = $this->actingAs($user)->get(route('card-groups.learn', $group));
+
+    $response->assertInertia(fn ($page) => $page
+        ->component('learn/Show')
+        ->where('progress', 33)
+    );
+});
+
 test('the learn page reports when a group has no cards', function () {
     $user = User::factory()->create();
     $group = CardGroup::factory()->create();

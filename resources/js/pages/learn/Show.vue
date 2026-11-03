@@ -17,6 +17,7 @@ const props = defineProps<{
         name: string;
     };
     card: LearnCard | null;
+    progress: number;
 }>();
 
 const flipped = ref(false);
@@ -62,6 +63,21 @@ function answer(difficulty: 'forgot' | 'hard' | 'medium' | 'easy') {
                 }}</span>
             </div>
 
+            <div class="mb-4 flex items-center gap-2">
+                <div
+                    class="h-2 flex-1 overflow-hidden rounded-full bg-[#e3e3e0] dark:bg-[#3E3E3A]"
+                >
+                    <div
+                        class="h-full rounded-full bg-[#1b1b18] dark:bg-[#EDEDEC]"
+                        :style="{ width: `${progress}%` }"
+                    />
+                </div>
+                <span
+                    class="w-10 text-right text-xs text-[#706f6c] dark:text-[#A1A09A]"
+                    >{{ progress }}%</span
+                >
+            </div>
+
             <div
                 v-if="card"
                 class="w-full rounded-lg bg-white p-6 shadow-[inset_0px_0px_0px_1px_rgba(26,26,0,0.16)] dark:bg-[#161615] dark:text-[#EDEDEC] dark:shadow-[inset_0px_0px_0px_1px_#fffaed2d]"
@@ -72,9 +88,7 @@ function answer(difficulty: 'forgot' | 'hard' | 'medium' | 'easy') {
                     @click="flip"
                 >
                     <span
-                        v-if="
-                            (flipped ? card.backLanguage : card.frontLanguage)
-                        "
+                        v-if="flipped ? card.backLanguage : card.frontLanguage"
                         class="mb-2 text-xs tracking-wide text-[#706f6c] uppercase dark:text-[#A1A09A]"
                     >
                         {{ flipped ? card.backLanguage : card.frontLanguage }}

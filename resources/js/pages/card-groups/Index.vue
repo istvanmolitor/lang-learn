@@ -11,6 +11,7 @@ type CardGroupListItem = {
     id: number;
     name: string;
     cards_count: number;
+    progress: number;
 };
 
 defineProps<{
@@ -61,35 +62,52 @@ function remove(groupId: number) {
                     <li
                         v-for="group in groups"
                         :key="group.id"
-                        class="flex items-center justify-between gap-4 border-b border-[#e3e3e0] pb-3 last:border-0 last:pb-0 dark:border-[#3E3E3A]"
+                        class="flex flex-col gap-2 border-b border-[#e3e3e0] pb-3 last:border-0 last:pb-0 dark:border-[#3E3E3A]"
                     >
-                        <div class="flex items-center gap-2 text-sm">
-                            <span>{{ group.name }}</span>
-                            <span class="text-[#706f6c] dark:text-[#A1A09A]"
-                                >({{ group.cards_count }} kártya)</span
-                            >
+                        <div class="flex items-center justify-between gap-4">
+                            <div class="flex items-center gap-2 text-sm">
+                                <span>{{ group.name }}</span>
+                                <span class="text-[#706f6c] dark:text-[#A1A09A]"
+                                    >({{ group.cards_count }} kártya)</span
+                                >
+                            </div>
+
+                            <div class="flex items-center gap-3 text-sm">
+                                <Link
+                                    :href="learn(group.id)"
+                                    class="text-[#706f6c] underline underline-offset-4 hover:text-[#1b1b18] dark:text-[#A1A09A] dark:hover:text-[#EDEDEC]"
+                                >
+                                    Tanulás
+                                </Link>
+                                <Link
+                                    :href="edit(group.id)"
+                                    class="text-[#706f6c] underline underline-offset-4 hover:text-[#1b1b18] dark:text-[#A1A09A] dark:hover:text-[#EDEDEC]"
+                                >
+                                    Szerkesztés
+                                </Link>
+                                <button
+                                    type="button"
+                                    class="text-[#f53003] dark:text-[#FF4433]"
+                                    @click="remove(group.id)"
+                                >
+                                    Törlés
+                                </button>
+                            </div>
                         </div>
 
-                        <div class="flex items-center gap-3 text-sm">
-                            <Link
-                                :href="learn(group.id)"
-                                class="text-[#706f6c] underline underline-offset-4 hover:text-[#1b1b18] dark:text-[#A1A09A] dark:hover:text-[#EDEDEC]"
+                        <div class="flex items-center gap-2">
+                            <div
+                                class="h-2 flex-1 overflow-hidden rounded-full bg-[#e3e3e0] dark:bg-[#3E3E3A]"
                             >
-                                Tanulás
-                            </Link>
-                            <Link
-                                :href="edit(group.id)"
-                                class="text-[#706f6c] underline underline-offset-4 hover:text-[#1b1b18] dark:text-[#A1A09A] dark:hover:text-[#EDEDEC]"
+                                <div
+                                    class="h-full rounded-full bg-[#1b1b18] dark:bg-[#EDEDEC]"
+                                    :style="{ width: `${group.progress}%` }"
+                                />
+                            </div>
+                            <span
+                                class="w-10 text-right text-xs text-[#706f6c] dark:text-[#A1A09A]"
+                                >{{ group.progress }}%</span
                             >
-                                Szerkesztés
-                            </Link>
-                            <button
-                                type="button"
-                                class="text-[#f53003] dark:text-[#FF4433]"
-                                @click="remove(group.id)"
-                            >
-                                Törlés
-                            </button>
                         </div>
                     </li>
                 </ul>
