@@ -11,7 +11,7 @@ test('guests are redirected to the login page when visiting home', function () {
 test('authenticated users are redirected away from the login page', function () {
     $response = $this->actingAs(User::factory()->create())->get(route('login'));
 
-    $response->assertRedirect(route('home'));
+    $response->assertRedirect(route('dashboard'));
 });
 
 test('users can authenticate with valid credentials', function () {
@@ -23,7 +23,7 @@ test('users can authenticate with valid credentials', function () {
     ]);
 
     $this->assertAuthenticatedAs($user);
-    $response->assertRedirect(route('home'));
+    $response->assertRedirect(route('dashboard'));
 });
 
 test('users cannot authenticate with an invalid password', function () {
