@@ -4,6 +4,7 @@ import {
     destroy,
     edit,
 } from '@/actions/App/Http/Controllers/CardGroupController';
+import { show as learn } from '@/actions/App/Http/Controllers/LearnController';
 import { Head, Link, router } from '@inertiajs/vue3';
 
 type CardGroupListItem = {
@@ -70,6 +71,12 @@ function remove(groupId: number) {
                         </div>
 
                         <div class="flex items-center gap-3 text-sm">
+                            <Link
+                                :href="learn(group.id)"
+                                class="text-[#706f6c] underline underline-offset-4 hover:text-[#1b1b18] dark:text-[#A1A09A] dark:hover:text-[#EDEDEC]"
+                            >
+                                Tanulás
+                            </Link>
                             <Link
                                 :href="edit(group.id)"
                                 class="text-[#706f6c] underline underline-offset-4 hover:text-[#1b1b18] dark:text-[#A1A09A] dark:hover:text-[#EDEDEC]"

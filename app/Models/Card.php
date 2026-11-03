@@ -36,6 +36,14 @@ class Card extends Model
     }
 
     /**
+     * @return HasMany<CardReview, $this>
+     */
+    public function reviews(): HasMany
+    {
+        return $this->hasMany(CardReview::class);
+    }
+
+    /**
      * Create, update, or remove the card's translations based on the given rows, one per language.
      *
      * @param  array<int, array{language_id: int, text: string|null}>  $translations

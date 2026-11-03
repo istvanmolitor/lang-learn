@@ -3,6 +3,7 @@
 use App\Http\Controllers\CardController;
 use App\Http\Controllers\CardGroupController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\LearnController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\SelectedLanguageController;
 use Illuminate\Http\Request;
@@ -24,6 +25,9 @@ Route::middleware('auth')->group(function () {
     Route::resource('card-groups', CardGroupController::class);
     Route::get('card-groups/{cardGroup}/export', [CardGroupController::class, 'export'])->name('card-groups.export');
     Route::post('card-groups/{cardGroup}/import', [CardGroupController::class, 'import'])->name('card-groups.import');
+
+    Route::get('card-groups/{cardGroup}/learn', [LearnController::class, 'show'])->name('card-groups.learn');
+    Route::post('card-groups/{cardGroup}/learn', [LearnController::class, 'store'])->name('card-groups.learn.answer');
 });
 
 require __DIR__.'/auth.php';
