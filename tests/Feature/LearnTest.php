@@ -33,7 +33,9 @@ test('the learn page shows the card text in the languages the user knows and is 
         ->component('learn/Show')
         ->where('card.id', $card->id)
         ->where('card.front', 'dog')
+        ->where('card.frontLanguage', $english->name)
         ->where('card.back', 'kutya')
+        ->where('card.backLanguage', $hungarian->name)
     );
 });
 
@@ -120,6 +122,34 @@ test('answering hard resets the interval back to one day', function () {
 
     expect($review->interval_days)->toBe(1);
     expect($review->repetitions)->toBe(0);
+});
+
+test('answering forgot resets the interval to zero days and lowers the ease factor more than hard', function () {
+    $user = User::factory()->create();
+    $group = CardGroup::factory()->create();
+    $card = Card::factory()->create();
+    $card->groups()->attach($group);
+
+    CardReview::factory()->create([
+        'user_id' => $user->id,
+        'card_id' => $card->id,
+        'ease_factor' => 2.5,
+        'interval_days' => 10,
+        'repetitions' => 3,
+        'due_at' => now()->subDay(),
+    ]);
+
+    $this->actingAs($user)->post(route('card-groups.learn.answer', $group), [
+        'card_id' => $card->id,
+        'difficulty' => 'forgot',
+    ]);
+
+    $review = CardReview::query()->where('card_id', $card->id)->latest('id')->first();
+
+    expect($review->interval_days)->toBe(0);
+    expect($review->repetitions)->toBe(0);
+    expect($review->ease_factor)->toBe(2.2);
+    expect($review->due_at->isAfter(now()))->toBeFalse();
 });
 
 test('a card not belonging to the group cannot be answered', function () {

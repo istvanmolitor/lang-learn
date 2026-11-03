@@ -22,6 +22,7 @@ class LearnController extends Controller
     public function show(CardGroup $cardGroup): Response
     {
         $user = request()->user();
+        $user->loadMissing(['selectedLanguage', 'nativeLanguage']);
 
         $card = $this->nextCardFor($cardGroup, $user);
 
@@ -78,7 +79,7 @@ class LearnController extends Controller
     /**
      * Build the front (language being learned) and back (native language) texts for a card.
      *
-     * @return array{id: int, front: string|null, back: string|null}
+     * @return array{id: int, front: string|null, frontLanguage: string|null, back: string|null, backLanguage: string|null}
      */
     private function cardPayload(Card $card, User $user): array
     {
@@ -87,7 +88,9 @@ class LearnController extends Controller
         return [
             'id' => $card->id,
             'front' => $textByLanguageId->get($user->selected_language_id),
+            'frontLanguage' => $user->selectedLanguage?->name,
             'back' => $textByLanguageId->get($user->language_id),
+            'backLanguage' => $user->nativeLanguage?->name,
         ];
     }
 }

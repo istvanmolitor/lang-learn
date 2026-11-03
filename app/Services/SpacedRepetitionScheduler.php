@@ -27,6 +27,11 @@ class SpacedRepetitionScheduler
         $repetitions = $previous === null ? 0 : $previous->repetitions;
 
         [$easeFactor, $intervalDays, $repetitions] = match ($difficulty) {
+            CardDifficulty::Forgot => [
+                max(self::MIN_EASE_FACTOR, $easeFactor - 0.3),
+                0,
+                0,
+            ],
             CardDifficulty::Hard => [
                 max(self::MIN_EASE_FACTOR, $easeFactor - 0.2),
                 1,
