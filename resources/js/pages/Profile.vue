@@ -35,7 +35,10 @@ const form = useForm({
 });
 
 function addLanguage() {
-    form.languages.push({ language_id: props.languages[0]?.id ?? 0, level: 'a1' });
+    form.languages.push({
+        language_id: props.languages[0]?.id ?? 0,
+        level: 'a1',
+    });
 }
 
 function removeLanguage(index: number) {
@@ -65,30 +68,44 @@ function submit() {
             >
                 <h1 class="mb-1 font-medium">Profil</h1>
                 <p class="mb-6 text-[13px] text-[#706f6c] dark:text-[#A1A09A]">
-                    Állítsd be az anyanyelvedet és a nyelveket, amelyeket ismersz.
+                    Állítsd be az anyanyelvedet és a nyelveket, amelyeket
+                    ismersz.
                 </p>
 
                 <form class="flex flex-col gap-6" @submit.prevent="submit">
                     <div class="flex flex-col gap-1">
-                        <label for="native_language_id" class="text-sm font-medium">Anyanyelv</label>
+                        <label
+                            for="native_language_id"
+                            class="text-sm font-medium"
+                            >Anyanyelv</label
+                        >
                         <select
                             id="native_language_id"
                             v-model="form.native_language_id"
                             class="rounded-sm border border-[#e3e3e0] bg-transparent px-3 py-1.5 text-sm outline-none focus:border-[#1b1b18] dark:border-[#3E3E3A] dark:focus:border-[#EDEDEC]"
                         >
                             <option :value="null">Nincs megadva</option>
-                            <option v-for="language in languages" :key="language.id" :value="language.id">
+                            <option
+                                v-for="language in languages"
+                                :key="language.id"
+                                :value="language.id"
+                            >
                                 {{ language.name }} ({{ language.native_name }})
                             </option>
                         </select>
-                        <div v-if="form.errors.native_language_id" class="text-sm text-[#f53003] dark:text-[#FF4433]">
+                        <div
+                            v-if="form.errors.native_language_id"
+                            class="text-sm text-[#f53003] dark:text-[#FF4433]"
+                        >
                             {{ form.errors.native_language_id }}
                         </div>
                     </div>
 
                     <div class="flex flex-col gap-2">
                         <div class="flex items-center justify-between">
-                            <span class="text-sm font-medium">Ismert nyelvek</span>
+                            <span class="text-sm font-medium"
+                                >Ismert nyelvek</span
+                            >
                             <button
                                 type="button"
                                 class="text-sm text-[#706f6c] underline underline-offset-4 hover:text-[#1b1b18] dark:text-[#A1A09A] dark:hover:text-[#EDEDEC]"
@@ -107,7 +124,11 @@ function submit() {
                                 v-model="userLanguage.language_id"
                                 class="flex-1 rounded-sm border border-[#e3e3e0] bg-transparent px-3 py-1.5 text-sm outline-none focus:border-[#1b1b18] dark:border-[#3E3E3A] dark:focus:border-[#EDEDEC]"
                             >
-                                <option v-for="language in languages" :key="language.id" :value="language.id">
+                                <option
+                                    v-for="language in languages"
+                                    :key="language.id"
+                                    :value="language.id"
+                                >
                                     {{ language.name }}
                                 </option>
                             </select>
@@ -116,7 +137,11 @@ function submit() {
                                 v-model="userLanguage.level"
                                 class="rounded-sm border border-[#e3e3e0] bg-transparent px-3 py-1.5 text-sm outline-none focus:border-[#1b1b18] dark:border-[#3E3E3A] dark:focus:border-[#EDEDEC]"
                             >
-                                <option v-for="level in levels" :key="level.value" :value="level.value">
+                                <option
+                                    v-for="level in levels"
+                                    :key="level.value"
+                                    :value="level.value"
+                                >
                                     {{ level.label }}
                                 </option>
                             </select>
@@ -130,7 +155,10 @@ function submit() {
                             </button>
                         </div>
 
-                        <div v-if="form.errors.languages" class="text-sm text-[#f53003] dark:text-[#FF4433]">
+                        <div
+                            v-if="form.errors.languages"
+                            class="text-sm text-[#f53003] dark:text-[#FF4433]"
+                        >
                             {{ form.errors.languages }}
                         </div>
                     </div>

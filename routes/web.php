@@ -1,5 +1,7 @@
 <?php
 
+use App\Http\Controllers\CardController;
+use App\Http\Controllers\CardGroupController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\SelectedLanguageController;
@@ -17,6 +19,9 @@ Route::middleware('auth')->group(function () {
 
     Route::get('profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::put('profile', [ProfileController::class, 'update'])->name('profile.update');
+
+    Route::resource('cards', CardController::class);
+    Route::resource('card-groups', CardGroupController::class);
 });
 
 require __DIR__.'/auth.php';
