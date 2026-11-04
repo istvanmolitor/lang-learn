@@ -2,13 +2,19 @@
 
 namespace App\Services;
 
-use App\Models\Card;
-use App\Models\CardGroup;
-use App\Models\Language;
+use App\Repositories\Contracts\CardGroupRepositoryInterface;
+use App\Repositories\Contracts\CardRepositoryInterface;
+use App\Repositories\Contracts\LanguageRepositoryInterface;
 use Illuminate\Support\Facades\DB;
 
 class CsvCardGroupImporter
 {
+    public function __construct(
+        private readonly CardRepositoryInterface $cards,
+        private readonly CardGroupRepositoryInterface $cardGroups,
+        private readonly LanguageRepositoryInterface $languages,
+    ) {}
+
     /**
      * Import the given CSV file into a card group with the given name.
      *
@@ -21,7 +27,7 @@ class CsvCardGroupImporter
      */
     public function import(string $csvPath, string $groupName): void
     {
-        $group = CardGroup::query()->firstOrCreate(['name' => $groupName]);
+        $group = $this->cardGroups->firstOrCreateByName($groupName);
 
         if (! $group->wasRecentlyCreated) {
             return;
@@ -34,7 +40,7 @@ class CsvCardGroupImporter
         $header = array_map(trim(...), fgetcsv($handle) ?: []);
 
         $languageIdsByColumn = collect($header)
-            ->map(fn (string $code) => Language::query()->where('code', $code)->value('id'))
+            ->map(fn (string $code) => $this->languages->findIdByCode($code))
             ->all();
 
         $englishColumn = array_search('en', $header, true);
@@ -57,17 +63,13 @@ class CsvCardGroupImporter
                 $englishText = $englishColumn !== false ? ($row[$englishColumn] ?? null) : null;
 
                 if ($englishLanguageId !== null && filled($englishText)) {
-                    $card = Card::query()
-                        ->whereHas('translations', fn ($query) => $query
-                            ->where('language_id', $englishLanguageId)
-                            ->where('text', $englishText))
-                        ->first();
+                    $card = $this->cards->findByTranslationText($englishLanguageId, $englishText);
                 }
 
-                $card ??= Card::create();
+                $card ??= $this->cards->create();
 
-                $card->syncTranslations($translations);
-                $group->cards()->syncWithoutDetaching([$card->id]);
+                $this->cards->syncTranslations($card, $translations);
+                $this->cardGroups->attachCard($group, $card);
             }
         });
 

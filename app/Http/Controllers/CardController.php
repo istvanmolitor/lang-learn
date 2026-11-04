@@ -5,8 +5,9 @@ namespace App\Http\Controllers;
 use App\Http\Requests\CardStoreRequest;
 use App\Http\Requests\CardUpdateRequest;
 use App\Models\Card;
-use App\Models\CardGroup;
-use App\Models\Language;
+use App\Repositories\Contracts\CardGroupRepositoryInterface;
+use App\Repositories\Contracts\CardRepositoryInterface;
+use App\Repositories\Contracts\LanguageRepositoryInterface;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -14,23 +15,20 @@ use Inertia\Response;
 
 class CardController extends Controller
 {
+    public function __construct(
+        private readonly CardRepositoryInterface $cards,
+        private readonly CardGroupRepositoryInterface $cardGroups,
+        private readonly LanguageRepositoryInterface $languages,
+    ) {}
+
     /**
      * Display a listing of the cards.
      */
     public function index(Request $request): Response
     {
         $search = trim((string) $request->query('search', ''));
-        $likeSearch = str_replace(['%', '_'], ['\%', '\_'], $search);
 
-        $cards = Card::query()
-            ->with(['translations.language', 'groups'])
-            ->when($search !== '', fn ($query) => $query->whereHas(
-                'translations',
-                fn ($translationQuery) => $translationQuery->where('text', 'like', '%'.$likeSearch.'%')
-            ))
-            ->orderBy('id')
-            ->paginate(20)
-            ->withQueryString()
+        $cards = $this->cards->paginateSearch($search)
             ->through(fn (Card $card) => [
                 'id' => $card->id,
                 'translations' => $card->translations->map(fn ($translation) => [
@@ -52,8 +50,8 @@ class CardController extends Controller
     public function create(): Response
     {
         return Inertia::render('cards/Create', [
-            'languages' => Language::query()->orderBy('name')->get(['id', 'code', 'name']),
-            'groups' => CardGroup::query()->orderBy('name')->get(['id', 'name']),
+            'languages' => $this->languages->allOrderedByName(['id', 'code', 'name']),
+            'groups' => $this->cardGroups->allOrderedByName(['id', 'name']),
         ]);
     }
 
@@ -62,10 +60,10 @@ class CardController extends Controller
      */
     public function store(CardStoreRequest $request): RedirectResponse
     {
-        $card = Card::create();
+        $card = $this->cards->create();
 
-        $card->syncTranslations($request->validated('translations', []));
-        $card->groups()->sync($request->validated('groups', []));
+        $this->cards->syncTranslations($card, $request->validated('translations', []));
+        $this->cards->syncGroups($card, $request->validated('groups', []));
 
         return redirect()->route('cards.index');
     }
@@ -75,7 +73,7 @@ class CardController extends Controller
      */
     public function edit(Card $card): Response
     {
-        $card->load(['translations', 'groups']);
+        $this->cards->loadForEdit($card);
 
         return Inertia::render('cards/Edit', [
             'card' => [
@@ -85,8 +83,8 @@ class CardController extends Controller
                 ),
                 'groupIds' => $card->groups->pluck('id'),
             ],
-            'languages' => Language::query()->orderBy('name')->get(['id', 'code', 'name']),
-            'groups' => CardGroup::query()->orderBy('name')->get(['id', 'name']),
+            'languages' => $this->languages->allOrderedByName(['id', 'code', 'name']),
+            'groups' => $this->cardGroups->allOrderedByName(['id', 'name']),
         ]);
     }
 
@@ -95,8 +93,8 @@ class CardController extends Controller
      */
     public function update(CardUpdateRequest $request, Card $card): RedirectResponse
     {
-        $card->syncTranslations($request->validated('translations', []));
-        $card->groups()->sync($request->validated('groups', []));
+        $this->cards->syncTranslations($card, $request->validated('translations', []));
+        $this->cards->syncGroups($card, $request->validated('groups', []));
 
         return redirect()->route('cards.index');
     }
@@ -106,7 +104,7 @@ class CardController extends Controller
      */
     public function destroy(Card $card): RedirectResponse
     {
-        $card->delete();
+        $this->cards->delete($card);
 
         return redirect()->route('cards.index');
     }

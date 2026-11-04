@@ -6,8 +6,9 @@ use App\Enums\CardDifficulty;
 use App\Http\Requests\LearnAnswerRequest;
 use App\Models\Card;
 use App\Models\CardGroup;
-use App\Models\CardReview;
 use App\Models\User;
+use App\Repositories\Contracts\CardGroupRepositoryInterface;
+use App\Repositories\Contracts\CardReviewRepositoryInterface;
 use App\Services\SpacedRepetitionScheduler;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Carbon;
@@ -17,6 +18,11 @@ use Inertia\Response;
 
 class LearnController extends Controller
 {
+    public function __construct(
+        private readonly CardGroupRepositoryInterface $cardGroups,
+        private readonly CardReviewRepositoryInterface $cardReviews,
+    ) {}
+
     /**
      * Show the next due flashcard for the given card group.
      */
@@ -25,7 +31,7 @@ class LearnController extends Controller
         $user = request()->user();
         $user->loadMissing(['selectedLanguage', 'nativeLanguage']);
 
-        $cards = $cardGroup->cardsWithLatestReviewFor($user);
+        $cards = $this->cardGroups->cardsWithLatestReviewFor($cardGroup, $user);
         $card = $this->nextCardFrom($cards);
 
         return Inertia::render('learn/Show', [
@@ -42,18 +48,14 @@ class LearnController extends Controller
     {
         $user = $request->user();
 
-        $card = $cardGroup->cards()->whereKey($request->validated('card_id'))->firstOrFail();
+        $card = $this->cardGroups->findCardInGroupOrFail($cardGroup, (int) $request->validated('card_id'));
         $difficulty = CardDifficulty::from($request->validated('difficulty'));
 
-        $previous = CardReview::query()
-            ->where('user_id', $user->id)
-            ->where('card_id', $card->id)
-            ->latest('id')
-            ->first();
+        $previous = $this->cardReviews->latestForUserAndCard($user->id, $card->id);
 
         $schedule = (new SpacedRepetitionScheduler)->schedule($previous, $difficulty);
 
-        CardReview::create([
+        $this->cardReviews->create([
             'user_id' => $user->id,
             'card_id' => $card->id,
             'difficulty' => $difficulty,

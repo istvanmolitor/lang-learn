@@ -7,9 +7,10 @@ use App\Http\Requests\CardGroupGenerateRequest;
 use App\Http\Requests\CardGroupImportRequest;
 use App\Http\Requests\CardGroupStoreRequest;
 use App\Http\Requests\CardGroupUpdateRequest;
-use App\Models\Card;
 use App\Models\CardGroup;
-use App\Models\Language;
+use App\Repositories\Contracts\CardGroupRepositoryInterface;
+use App\Repositories\Contracts\CardRepositoryInterface;
+use App\Repositories\Contracts\LanguageRepositoryInterface;
 use App\Services\CardGenerator;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\DB;
@@ -21,6 +22,12 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class CardGroupController extends Controller
 {
+    public function __construct(
+        private readonly CardGroupRepositoryInterface $cardGroups,
+        private readonly CardRepositoryInterface $cards,
+        private readonly LanguageRepositoryInterface $languages,
+    ) {}
+
     /**
      * Display a listing of the card groups.
      */
@@ -29,15 +36,12 @@ class CardGroupController extends Controller
         $user = request()->user();
 
         return Inertia::render('card-groups/Index', [
-            'groups' => CardGroup::query()
-                ->withCount('cards')
-                ->orderBy('name')
-                ->get()
+            'groups' => $this->cardGroups->allWithCardsCountOrderedByName()
                 ->map(fn (CardGroup $group) => [
                     'id' => $group->id,
                     'name' => $group->name,
                     'cards_count' => $group->cards_count,
-                    'progress' => $group->progressPercentageFor($user),
+                    'progress' => $this->cardGroups->progressPercentageFor($group, $user),
                 ]),
         ]);
     }
@@ -55,7 +59,7 @@ class CardGroupController extends Controller
      */
     public function store(CardGroupStoreRequest $request): RedirectResponse
     {
-        CardGroup::create($request->validated());
+        $this->cardGroups->create($request->validated());
 
         return redirect()->route('card-groups.index');
     }
@@ -73,12 +77,12 @@ class CardGroupController extends Controller
      */
     public function storeAi(CardGroupGenerateRequest $request, CardGenerator $generator): RedirectResponse
     {
-        $group = CardGroup::create(['name' => $request->validated('name')]);
+        $group = $this->cardGroups->create(['name' => $request->validated('name')]);
 
         try {
             $result = $generator->generateInto($group, $request->validated('topic'), (int) $request->validated('count'));
         } catch (PrismException $exception) {
-            $group->delete();
+            $this->cardGroups->delete($group);
 
             return back()->withInput()->withErrors(['topic' => 'A kártyák generálása sikertelen: '.$exception->getMessage()]);
         }
@@ -116,7 +120,7 @@ class CardGroupController extends Controller
      */
     public function update(CardGroupUpdateRequest $request, CardGroup $cardGroup): RedirectResponse
     {
-        $cardGroup->update($request->validated());
+        $this->cardGroups->update($cardGroup, $request->validated());
 
         return redirect()->route('card-groups.index');
     }
@@ -126,7 +130,7 @@ class CardGroupController extends Controller
      */
     public function destroy(CardGroup $cardGroup): RedirectResponse
     {
-        $cardGroup->delete();
+        $this->cardGroups->delete($cardGroup);
 
         return redirect()->route('card-groups.index');
     }
@@ -136,9 +140,9 @@ class CardGroupController extends Controller
      */
     public function export(CardGroup $cardGroup): StreamedResponse
     {
-        $languages = Language::query()->orderBy('code')->get(['id', 'code']);
+        $languages = $this->languages->allOrderedByCode(['id', 'code']);
 
-        $cards = $cardGroup->cards()->with('translations')->orderBy('id')->get();
+        $cards = $this->cardGroups->cardsWithTranslationsOrderedById($cardGroup);
 
         $filename = Str::slug($cardGroup->name).'.csv';
 
@@ -153,7 +157,7 @@ class CardGroupController extends Controller
                 $textByLanguageId = $card->translations->pluck('text', 'language_id');
 
                 fputcsv($handle, $languages->map(
-                    fn (Language $language) => $textByLanguageId->get($language->id, '')
+                    fn ($language) => $textByLanguageId->get($language->id, '')
                 )->all());
             }
 
@@ -175,7 +179,7 @@ class CardGroupController extends Controller
         $header = fgetcsv($handle) ?: [];
 
         $languageIdsByColumn = collect($header)
-            ->map(fn (?string $code) => Language::query()->where('code', trim((string) $code))->value('id'))
+            ->map(fn (?string $code) => $this->languages->findIdByCode(trim((string) $code)))
             ->all();
 
         DB::transaction(function () use ($handle, $languageIdsByColumn, $cardGroup) {
@@ -191,9 +195,9 @@ class CardGroupController extends Controller
                     }
                 }
 
-                $card = Card::create();
-                $card->syncTranslations($translations);
-                $cardGroup->cards()->attach($card);
+                $card = $this->cards->create();
+                $this->cards->syncTranslations($card, $translations);
+                $this->cardGroups->attachCard($cardGroup, $card);
             }
         });
 

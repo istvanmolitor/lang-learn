@@ -4,12 +4,19 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\ProfileUpdateRequest;
 use App\Models\Language;
+use App\Repositories\Contracts\LanguageRepositoryInterface;
+use App\Repositories\Contracts\UserRepositoryInterface;
 use Illuminate\Http\RedirectResponse;
 use Inertia\Inertia;
 use Inertia\Response;
 
 class ProfileController extends Controller
 {
+    public function __construct(
+        private readonly UserRepositoryInterface $users,
+        private readonly LanguageRepositoryInterface $languages,
+    ) {}
+
     /**
      * Show the user's profile settings.
      */
@@ -18,9 +25,9 @@ class ProfileController extends Controller
         $user = request()->user();
 
         return Inertia::render('Profile', [
-            'languages' => Language::query()->orderBy('name')->get(['id', 'code', 'name', 'native_name']),
+            'languages' => $this->languages->allOrderedByName(['id', 'code', 'name', 'native_name']),
             'nativeLanguageId' => $user->language_id,
-            'userLanguages' => $user->languages()->get(['languages.id'])
+            'userLanguages' => $this->users->knownLanguagesFor($user, ['languages.id'])
                 ->map(fn (Language $language) => [
                     'language_id' => $language->id,
                     'level' => $language->pivot->level,
@@ -36,19 +43,15 @@ class ProfileController extends Controller
         $user = $request->user();
         $nativeLanguageId = $request->validated('native_language_id');
 
-        $user->update(['language_id' => $nativeLanguageId]);
+        $this->users->updateNativeLanguage($user, $nativeLanguageId);
+        $this->users->syncLanguages($user, $request->validated('languages'));
 
-        $user->languages()->sync(
-            collect($request->validated('languages'))
-                ->mapWithKeys(fn (array $row) => [$row['language_id'] => ['level' => $row['level']]])
-        );
-
-        $learnableLanguageIds = $user->languages()->pluck('languages.id')->reject(
+        $learnableLanguageIds = $this->users->knownLanguageIdsFor($user)->reject(
             fn (int $languageId) => $languageId === $nativeLanguageId
         );
 
         if ($user->selected_language_id && ! $learnableLanguageIds->contains($user->selected_language_id)) {
-            $user->update(['selected_language_id' => null]);
+            $this->users->updateSelectedLanguage($user, null);
         }
 
         return redirect()->route('profile.edit');

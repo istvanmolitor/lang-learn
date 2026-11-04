@@ -2,10 +2,10 @@
 
 namespace App\Services;
 
-use App\Models\Card;
 use App\Models\CardGroup;
-use App\Models\Language;
-use Illuminate\Support\Str;
+use App\Repositories\Contracts\CardGroupRepositoryInterface;
+use App\Repositories\Contracts\CardRepositoryInterface;
+use App\Repositories\Contracts\LanguageRepositoryInterface;
 use Prism\Prism\Enums\Provider;
 use Prism\Prism\Facades\Prism;
 use Prism\Prism\Schema\ArraySchema;
@@ -14,6 +14,12 @@ use Prism\Prism\Schema\StringSchema;
 
 class CardGenerator
 {
+    public function __construct(
+        private readonly CardRepositoryInterface $cards,
+        private readonly CardGroupRepositoryInterface $cardGroups,
+        private readonly LanguageRepositoryInterface $languages,
+    ) {}
+
     /**
      * Generate English-Hungarian vocabulary cards for the given topic and attach them to the group.
      *
@@ -24,8 +30,8 @@ class CardGenerator
      */
     public function generateInto(CardGroup $group, string $topic, int $count): array
     {
-        $english = Language::query()->where('code', 'en')->firstOrFail();
-        $hungarian = Language::query()->where('code', 'hu')->firstOrFail();
+        $english = $this->languages->findByCodeOrFail('en');
+        $hungarian = $this->languages->findByCodeOrFail('hu');
 
         $schema = new ObjectSchema(
             name: 'card_list',
@@ -68,24 +74,20 @@ class CardGenerator
                 continue;
             }
 
-            $card = Card::query()
-                ->whereHas('translations', fn ($query) => $query
-                    ->where('language_id', $english->id)
-                    ->whereRaw('LOWER(text) = ?', [Str::lower($englishText)]))
-                ->first();
+            $card = $this->cards->findByTranslationText($english->id, $englishText);
 
             if ($card) {
                 $reused++;
             } else {
-                $card = Card::create();
-                $card->syncTranslations([
+                $card = $this->cards->create();
+                $this->cards->syncTranslations($card, [
                     ['language_id' => $english->id, 'text' => $englishText],
                     ['language_id' => $hungarian->id, 'text' => $hungarianText],
                 ]);
                 $created++;
             }
 
-            $group->cards()->syncWithoutDetaching($card->id);
+            $this->cardGroups->attachCard($group, $card);
         }
 
         return ['created' => $created, 'reused' => $reused];

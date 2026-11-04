@@ -2,11 +2,16 @@
 
 namespace App\Http\Controllers;
 
+use App\Repositories\Contracts\UserRepositoryInterface;
 use Inertia\Inertia;
 use Inertia\Response;
 
 class DashboardController extends Controller
 {
+    public function __construct(
+        private readonly UserRepositoryInterface $users,
+    ) {}
+
     /**
      * Show the dashboard.
      */
@@ -15,10 +20,10 @@ class DashboardController extends Controller
         $user = request()->user();
 
         return Inertia::render('Dashboard', [
-            'learnableLanguages' => $user->languages()
-                ->when($user->language_id, fn ($query, $languageId) => $query->where('languages.id', '!=', $languageId))
-                ->orderBy('languages.name')
-                ->get(['languages.id', 'languages.code', 'languages.name', 'languages.native_name']),
+            'learnableLanguages' => $this->users->learnableLanguagesFor(
+                $user,
+                ['languages.id', 'languages.code', 'languages.name', 'languages.native_name']
+            ),
             'selectedLanguageId' => $user->selected_language_id,
         ]);
     }

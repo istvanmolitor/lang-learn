@@ -3,20 +3,22 @@
 namespace App\Http\Controllers;
 
 use App\Models\Article;
+use App\Repositories\Contracts\ArticleRepositoryInterface;
 use Inertia\Inertia;
 use Inertia\Response;
 
 class ArticleController extends Controller
 {
+    public function __construct(
+        private readonly ArticleRepositoryInterface $articles,
+    ) {}
+
     /**
      * Display a listing of the articles.
      */
     public function index(): Response
     {
-        $articles = Article::query()
-            ->with('language')
-            ->orderBy('title')
-            ->get()
+        $articles = $this->articles->allWithLanguageOrderedByTitle()
             ->map(fn (Article $article) => [
                 'id' => $article->id,
                 'title' => $article->title,
@@ -33,7 +35,7 @@ class ArticleController extends Controller
      */
     public function show(Article $article): Response
     {
-        $article->load(['language', 'paragraphs.sentences.translations']);
+        $this->articles->loadForShow($article);
 
         $user = request()->user();
 
