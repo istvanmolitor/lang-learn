@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import {
     create,
+    createAi,
     destroy,
     edit,
 } from '@/actions/App/Http/Controllers/CardGroupController';
@@ -38,12 +39,20 @@ function remove(groupId: number) {
                 >
                     ← Vissza
                 </Link>
-                <Link
-                    :href="create()"
-                    class="text-sm text-[#706f6c] underline underline-offset-4 hover:text-[#1b1b18] dark:text-[#A1A09A] dark:hover:text-[#EDEDEC]"
-                >
-                    + Új csoport
-                </Link>
+                <div class="flex items-center gap-4">
+                    <Link
+                        :href="createAi()"
+                        class="text-sm text-[#706f6c] underline underline-offset-4 hover:text-[#1b1b18] dark:text-[#A1A09A] dark:hover:text-[#EDEDEC]"
+                    >
+                        + AI csoport
+                    </Link>
+                    <Link
+                        :href="create()"
+                        class="text-sm text-[#706f6c] underline underline-offset-4 hover:text-[#1b1b18] dark:text-[#A1A09A] dark:hover:text-[#EDEDEC]"
+                    >
+                        + Új csoport
+                    </Link>
+                </div>
             </div>
 
             <div

@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\ArticleController;
 use App\Http\Controllers\CardController;
 use App\Http\Controllers\CardGroupController;
 use App\Http\Controllers\DashboardController;
@@ -23,11 +24,16 @@ Route::middleware('auth')->group(function () {
 
     Route::resource('cards', CardController::class);
     Route::resource('card-groups', CardGroupController::class);
+    Route::get('card-groups-ai/create', [CardGroupController::class, 'createAi'])->name('card-groups.create-ai');
+    Route::post('card-groups-ai', [CardGroupController::class, 'storeAi'])->name('card-groups.store-ai');
+    Route::post('card-groups/{cardGroup}/generate-cards', [CardGroupController::class, 'generateCards'])->name('card-groups.generate-cards');
     Route::get('card-groups/{cardGroup}/export', [CardGroupController::class, 'export'])->name('card-groups.export');
     Route::post('card-groups/{cardGroup}/import', [CardGroupController::class, 'import'])->name('card-groups.import');
 
     Route::get('card-groups/{cardGroup}/learn', [LearnController::class, 'show'])->name('card-groups.learn');
     Route::post('card-groups/{cardGroup}/learn', [LearnController::class, 'store'])->name('card-groups.learn.answer');
+
+    Route::resource('articles', ArticleController::class)->only(['index', 'show']);
 });
 
 require __DIR__.'/auth.php';

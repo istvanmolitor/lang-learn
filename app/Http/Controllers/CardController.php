@@ -8,6 +8,7 @@ use App\Models\Card;
 use App\Models\CardGroup;
 use App\Models\Language;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -16,13 +17,21 @@ class CardController extends Controller
     /**
      * Display a listing of the cards.
      */
-    public function index(): Response
+    public function index(Request $request): Response
     {
+        $search = trim((string) $request->query('search', ''));
+        $likeSearch = str_replace(['%', '_'], ['\%', '\_'], $search);
+
         $cards = Card::query()
             ->with(['translations.language', 'groups'])
+            ->when($search !== '', fn ($query) => $query->whereHas(
+                'translations',
+                fn ($translationQuery) => $translationQuery->where('text', 'like', '%'.$likeSearch.'%')
+            ))
             ->orderBy('id')
-            ->get()
-            ->map(fn (Card $card) => [
+            ->paginate(20)
+            ->withQueryString()
+            ->through(fn (Card $card) => [
                 'id' => $card->id,
                 'translations' => $card->translations->map(fn ($translation) => [
                     'language_code' => $translation->language->code,
@@ -33,6 +42,7 @@ class CardController extends Controller
 
         return Inertia::render('cards/Index', [
             'cards' => $cards,
+            'search' => $search,
         ]);
     }
 

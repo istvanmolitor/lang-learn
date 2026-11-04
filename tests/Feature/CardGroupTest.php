@@ -5,7 +5,11 @@ use App\Models\CardGroup;
 use App\Models\CardReview;
 use App\Models\Language;
 use App\Models\User;
+use App\Services\CardGenerator;
 use Illuminate\Http\UploadedFile;
+use Prism\Prism\Exceptions\PrismRateLimitedException;
+use Prism\Prism\Facades\Prism;
+use Prism\Prism\Testing\StructuredResponseFake;
 
 test('guests cannot view the card groups page', function () {
     $this->get(route('card-groups.index'))->assertRedirect(route('login'));
@@ -123,4 +127,97 @@ test('users can import cards into a card group from csv', function () {
 
     expect($dog)->not->toBeNull();
     expect($dog->translations()->where('language_id', $hungarian->id)->first()->text)->toBe('kutya');
+});
+
+test('users can create a card group with ai-generated cards', function () {
+    $user = User::factory()->create();
+    Language::factory()->create(['code' => 'en']);
+    Language::factory()->create(['code' => 'hu']);
+
+    Prism::fake([
+        StructuredResponseFake::make()->withStructured([
+            'cards' => [
+                ['en' => 'dog', 'hu' => 'kutya'],
+                ['en' => 'cat', 'hu' => 'macska'],
+            ],
+        ]),
+    ]);
+
+    $response = $this->actingAs($user)->post(route('card-groups.store-ai'), [
+        'name' => 'Animals',
+        'topic' => 'animals',
+        'count' => 2,
+    ]);
+
+    $group = CardGroup::query()->where('name', 'Animals')->firstOrFail();
+    $response->assertRedirect(route('card-groups.edit', $group));
+    expect($group->cards()->count())->toBe(2);
+});
+
+test('generating cards into a group reuses existing cards instead of duplicating them', function () {
+    $user = User::factory()->create();
+    $english = Language::factory()->create(['code' => 'en']);
+    $hungarian = Language::factory()->create(['code' => 'hu']);
+    $group = CardGroup::factory()->create();
+
+    $existing = Card::factory()->create();
+    $existing->syncTranslations([
+        ['language_id' => $english->id, 'text' => 'dog'],
+        ['language_id' => $hungarian->id, 'text' => 'kutya'],
+    ]);
+
+    Prism::fake([
+        StructuredResponseFake::make()->withStructured([
+            'cards' => [
+                ['en' => 'dog', 'hu' => 'kutya'],
+                ['en' => 'cat', 'hu' => 'macska'],
+            ],
+        ]),
+    ]);
+
+    $response = $this->actingAs($user)->post(route('card-groups.generate-cards', $group), [
+        'topic' => 'animals',
+        'count' => 2,
+    ]);
+
+    $response->assertRedirect(route('card-groups.edit', $group));
+    expect(Card::query()->count())->toBe(2);
+    expect($group->cards()->count())->toBe(2);
+    expect($group->cards()->pluck('cards.id'))->toContain($existing->id);
+});
+
+test('creating a card group with ai does not keep the group if generation fails', function () {
+    $user = User::factory()->create();
+
+    $this->mock(CardGenerator::class)
+        ->shouldReceive('generateInto')
+        ->andThrow(PrismRateLimitedException::make());
+
+    $response = $this->actingAs($user)->post(route('card-groups.store-ai'), [
+        'name' => 'Animals',
+        'topic' => 'animals',
+        'count' => 2,
+    ]);
+
+    $response->assertRedirect();
+    $response->assertSessionHasErrors('topic');
+    expect(CardGroup::query()->where('name', 'Animals')->exists())->toBeFalse();
+});
+
+test('generating cards into an existing group keeps the group if generation fails', function () {
+    $user = User::factory()->create();
+    $group = CardGroup::factory()->create();
+
+    $this->mock(CardGenerator::class)
+        ->shouldReceive('generateInto')
+        ->andThrow(PrismRateLimitedException::make());
+
+    $response = $this->actingAs($user)->post(route('card-groups.generate-cards', $group), [
+        'topic' => 'animals',
+        'count' => 2,
+    ]);
+
+    $response->assertRedirect();
+    $response->assertSessionHasErrors('topic');
+    expect(CardGroup::query()->find($group->id))->not->toBeNull();
 });

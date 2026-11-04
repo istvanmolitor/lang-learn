@@ -85,6 +85,38 @@ test('a card can belong to multiple groups', function () {
     expect($card->groups()->count())->toBe(2);
 });
 
+test('the cards index is paginated', function () {
+    $user = User::factory()->create();
+    Card::factory()->count(25)->create();
+
+    $response = $this->actingAs($user)->get(route('cards.index'));
+
+    $response->assertInertia(fn ($page) => $page
+        ->component('cards/Index')
+        ->has('cards.data', 20)
+        ->where('cards.total', 25)
+    );
+});
+
+test('the cards index can be searched by translation text', function () {
+    $user = User::factory()->create();
+    $english = Language::factory()->create(['code' => 'en']);
+
+    $dog = Card::factory()->create();
+    $dog->translations()->create(['language_id' => $english->id, 'text' => 'dog']);
+
+    $cat = Card::factory()->create();
+    $cat->translations()->create(['language_id' => $english->id, 'text' => 'cat']);
+
+    $response = $this->actingAs($user)->get(route('cards.index', ['search' => 'dog']));
+
+    $response->assertInertia(fn ($page) => $page
+        ->component('cards/Index')
+        ->has('cards.data', 1)
+        ->where('cards.data.0.id', $dog->id)
+    );
+});
+
 test('users can delete a card', function () {
     $user = User::factory()->create();
     $card = Card::factory()->create();

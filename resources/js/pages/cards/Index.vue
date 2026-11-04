@@ -3,8 +3,10 @@ import {
     create,
     destroy,
     edit,
+    index,
 } from '@/actions/App/Http/Controllers/CardController';
 import { Head, Link, router } from '@inertiajs/vue3';
+import { ref, watch } from 'vue';
 
 type CardListItem = {
     id: number;
@@ -12,9 +14,37 @@ type CardListItem = {
     groups: string[];
 };
 
-defineProps<{
-    cards: CardListItem[];
+type PaginationLink = {
+    url: string | null;
+    label: string;
+    active: boolean;
+};
+
+type Paginated<T> = {
+    data: T[];
+    links: PaginationLink[];
+};
+
+const props = defineProps<{
+    cards: Paginated<CardListItem>;
+    search: string;
 }>();
+
+const search = ref(props.search);
+
+let debounceTimeout: ReturnType<typeof setTimeout> | undefined;
+
+watch(search, (value) => {
+    clearTimeout(debounceTimeout);
+
+    debounceTimeout = setTimeout(() => {
+        router.get(
+            index.url(),
+            { search: value || undefined },
+            { preserveState: true, preserveScroll: true, replace: true },
+        );
+    }, 300);
+});
 
 function remove(cardId: number) {
     if (window.confirm('Biztosan törlöd ezt a kártyát?')) {
@@ -49,16 +79,23 @@ function remove(cardId: number) {
             >
                 <h1 class="mb-6 font-medium">Kártyák</h1>
 
+                <input
+                    v-model="search"
+                    type="search"
+                    placeholder="Keresés..."
+                    class="mb-6 w-full rounded-sm border border-[#e3e3e0] bg-transparent px-3 py-1.5 text-sm outline-none focus:border-[#1b1b18] dark:border-[#3E3E3A] dark:focus:border-[#EDEDEC]"
+                />
+
                 <p
-                    v-if="cards.length === 0"
+                    v-if="cards.data.length === 0"
                     class="text-sm text-[#706f6c] dark:text-[#A1A09A]"
                 >
-                    Még nincs kártya.
+                    Nincs a keresésnek megfelelő kártya.
                 </p>
 
                 <ul v-else class="flex flex-col gap-4">
                     <li
-                        v-for="card in cards"
+                        v-for="card in cards.data"
                         :key="card.id"
                         class="flex items-start justify-between gap-4 border-b border-[#e3e3e0] pb-4 last:border-0 last:pb-0 dark:border-[#3E3E3A]"
                     >
@@ -115,6 +152,31 @@ function remove(cardId: number) {
                         </div>
                     </li>
                 </ul>
+
+                <nav
+                    v-if="cards.links.length > 3"
+                    class="mt-6 flex flex-wrap items-center gap-1"
+                >
+                    <template v-for="(link, index) in cards.links" :key="index">
+                        <span
+                            v-if="link.url === null"
+                            class="rounded-sm px-3 py-1 text-sm text-[#b4b3af] dark:text-[#5a5a57]"
+                            v-html="link.label"
+                        />
+                        <Link
+                            v-else
+                            :href="link.url"
+                            preserve-scroll
+                            class="rounded-sm px-3 py-1 text-sm hover:bg-[#f5f5f4] dark:hover:bg-[#1f1f1d]"
+                            :class="
+                                link.active
+                                    ? 'bg-[#1b1b18] text-white dark:bg-[#eeeeec] dark:text-[#1C1C1A]'
+                                    : 'text-[#706f6c] dark:text-[#A1A09A]'
+                            "
+                            v-html="link.label"
+                        />
+                    </template>
+                </nav>
             </div>
         </div>
     </div>

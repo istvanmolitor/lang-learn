@@ -1,0 +1,72 @@
+<?php
+
+namespace Database\Seeders;
+
+use App\Models\Article;
+use App\Models\Language;
+use Illuminate\Database\Seeder;
+
+class ArticleSeeder extends Seeder
+{
+    /**
+     * Run the database seeds.
+     */
+    public function run(): void
+    {
+        $english = Language::query()->where('code', 'en')->first();
+        $hungarian = Language::query()->where('code', 'hu')->first();
+
+        if (! $english || ! $hungarian) {
+            return;
+        }
+
+        $articles = [
+            'A Walk in the Park' => [
+                [
+                    ['en' => 'The sun was shining brightly.', 'hu' => 'A nap fényesen sütött.'],
+                    ['en' => 'Birds were singing in the trees.', 'hu' => 'A madarak a fákon énekeltek.'],
+                ],
+                [
+                    ['en' => 'Anna decided to go for a walk.', 'hu' => 'Anna elhatározta, hogy elmegy sétálni.'],
+                    ['en' => 'She took her dog with her.', 'hu' => 'Magával vitte a kutyáját.'],
+                    ['en' => 'They walked along the river.', 'hu' => 'A folyó mentén sétáltak.'],
+                ],
+            ],
+            'The Old Market' => [
+                [
+                    ['en' => 'The market opens early in the morning.', 'hu' => 'A piac korán reggel nyit.'],
+                    ['en' => 'Farmers sell fresh fruit and vegetables.', 'hu' => 'A gazdák friss gyümölcsöt és zöldséget árulnak.'],
+                ],
+                [
+                    ['en' => 'People come from all over the city.', 'hu' => 'Emberek jönnek a város minden részéről.'],
+                    ['en' => 'The prices are usually very good.', 'hu' => 'Az árak általában nagyon jók.'],
+                ],
+            ],
+        ];
+
+        foreach ($articles as $title => $paragraphs) {
+            $article = Article::query()->updateOrCreate(
+                ['title' => $title],
+                ['language_id' => $english->id],
+            );
+
+            $article->paragraphs()->delete();
+
+            foreach ($paragraphs as $paragraphPosition => $sentences) {
+                $paragraph = $article->paragraphs()->create(['position' => $paragraphPosition]);
+
+                foreach ($sentences as $sentencePosition => $translations) {
+                    $sentence = $paragraph->sentences()->create([
+                        'position' => $sentencePosition,
+                        'text' => $translations['en'],
+                    ]);
+
+                    $sentence->translations()->create([
+                        'language_id' => $hungarian->id,
+                        'text' => $translations['hu'],
+                    ]);
+                }
+            }
+        }
+    }
+}
