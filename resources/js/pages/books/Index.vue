@@ -1,20 +1,24 @@
 <script setup lang="ts">
-import { show } from '@/actions/App/Http/Controllers/ArticleController';
+import {
+    create,
+    show,
+} from '@/actions/App/Http/Controllers/BookController';
 import { Head, Link } from '@inertiajs/vue3';
 
-type ArticleListItem = {
+type BookListItem = {
     id: number;
     title: string;
     language: string;
 };
 
 defineProps<{
-    articles: ArticleListItem[];
+    books: BookListItem[];
+    status?: string | null;
 }>();
 </script>
 
 <template>
-    <Head title="Cikkek" />
+    <Head title="Könyvek" />
     <div
         class="flex min-h-screen flex-col items-center bg-[#FDFDFC] p-6 text-[#1b1b18] dark:bg-[#0a0a0a]"
     >
@@ -31,32 +35,47 @@ defineProps<{
             <div
                 class="w-full rounded-lg bg-white p-6 shadow-[inset_0px_0px_0px_1px_rgba(26,26,0,0.16)] dark:bg-[#161615] dark:text-[#EDEDEC] dark:shadow-[inset_0px_0px_0px_1px_#fffaed2d]"
             >
-                <h1 class="mb-6 font-medium">Cikkek</h1>
+                <div class="mb-6 flex items-center justify-between">
+                    <h1 class="font-medium">Könyvek</h1>
+                    <Link
+                        :href="create()"
+                        class="inline-block rounded-sm border border-[#e3e3e0] px-5 py-1.5 text-sm leading-normal hover:border-[#1b1b18] dark:border-[#3E3E3A] dark:hover:border-[#EDEDEC]"
+                    >
+                        Könyv feltöltése
+                    </Link>
+                </div>
 
                 <p
-                    v-if="articles.length === 0"
+                    v-if="status"
+                    class="mb-6 rounded-sm border border-[#e3e3e0] px-3 py-2 text-sm dark:border-[#3E3E3A]"
+                >
+                    {{ status }}
+                </p>
+
+                <p
+                    v-if="books.length === 0"
                     class="text-sm text-[#706f6c] dark:text-[#A1A09A]"
                 >
-                    Még nincs cikk.
+                    Még nincs könyv.
                 </p>
 
                 <ul v-else class="flex flex-col gap-4">
                     <li
-                        v-for="article in articles"
-                        :key="article.id"
+                        v-for="book in books"
+                        :key="book.id"
                         class="flex items-center justify-between gap-4 border-b border-[#e3e3e0] pb-4 last:border-0 last:pb-0 dark:border-[#3E3E3A]"
                     >
                         <div class="flex flex-col gap-1">
                             <Link
-                                :href="show(article.id)"
+                                :href="show(book.id)"
                                 class="font-medium underline-offset-4 hover:underline"
                             >
-                                {{ article.title }}
+                                {{ book.title }}
                             </Link>
                             <span
                                 class="text-xs text-[#706f6c] uppercase dark:text-[#A1A09A]"
                             >
-                                {{ article.language }}
+                                {{ book.language }}
                             </span>
                         </div>
                     </li>

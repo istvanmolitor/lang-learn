@@ -1,8 +1,9 @@
 <?php
 
-use App\Http\Controllers\ArticleController;
+use App\Http\Controllers\BookController;
 use App\Http\Controllers\CardController;
 use App\Http\Controllers\CardGroupController;
+use App\Http\Controllers\CardTypeController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\LearnController;
 use App\Http\Controllers\ProfileController;
@@ -23,6 +24,7 @@ Route::middleware('auth')->group(function () {
     Route::put('profile', [ProfileController::class, 'update'])->name('profile.update');
 
     Route::resource('cards', CardController::class);
+    Route::resource('card-types', CardTypeController::class);
     Route::resource('card-groups', CardGroupController::class);
     Route::get('card-groups-ai/create', [CardGroupController::class, 'createAi'])->name('card-groups.create-ai');
     Route::post('card-groups-ai', [CardGroupController::class, 'storeAi'])->name('card-groups.store-ai');
@@ -33,7 +35,7 @@ Route::middleware('auth')->group(function () {
     Route::get('card-groups/{cardGroup}/learn', [LearnController::class, 'show'])->name('card-groups.learn');
     Route::post('card-groups/{cardGroup}/learn', [LearnController::class, 'store'])->name('card-groups.learn.answer');
 
-    Route::resource('articles', ArticleController::class)->only(['index', 'show']);
+    Route::resource('books', BookController::class)->only(['index', 'create', 'store', 'show']);
 });
 
 require __DIR__.'/auth.php';

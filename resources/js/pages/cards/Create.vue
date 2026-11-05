@@ -13,9 +13,15 @@ type CardGroupOption = {
     name: string;
 };
 
+type CardTypeOption = {
+    id: number;
+    name: string;
+};
+
 const props = defineProps<{
     languages: Language[];
     groups: CardGroupOption[];
+    cardTypes: CardTypeOption[];
 }>();
 
 const form = useForm({
@@ -24,6 +30,7 @@ const form = useForm({
         text: '',
     })),
     groups: [] as number[],
+    card_type_id: null as number | null,
 });
 
 function submit() {
@@ -87,6 +94,32 @@ function submit() {
                         >
                             Még nincs nyelv.
                         </p>
+                    </div>
+
+                    <div class="flex flex-col gap-1">
+                        <label for="card_type_id" class="text-sm font-medium"
+                            >Szófaj</label
+                        >
+                        <select
+                            id="card_type_id"
+                            v-model="form.card_type_id"
+                            class="rounded-sm border border-[#e3e3e0] bg-transparent px-3 py-1.5 text-sm outline-none focus:border-[#1b1b18] dark:border-[#3E3E3A] dark:focus:border-[#EDEDEC]"
+                        >
+                            <option :value="null">Nincs megadva</option>
+                            <option
+                                v-for="cardType in cardTypes"
+                                :key="cardType.id"
+                                :value="cardType.id"
+                            >
+                                {{ cardType.name }}
+                            </option>
+                        </select>
+                        <div
+                            v-if="form.errors.card_type_id"
+                            class="text-sm text-[#f53003] dark:text-[#FF4433]"
+                        >
+                            {{ form.errors.card_type_id }}
+                        </div>
                     </div>
 
                     <div class="flex flex-col gap-2">

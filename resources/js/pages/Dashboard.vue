@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { index as articlesIndex } from '@/actions/App/Http/Controllers/ArticleController';
 import { destroy } from '@/actions/App/Http/Controllers/Auth/AuthenticatedSessionController';
+import { index as booksIndex } from '@/actions/App/Http/Controllers/BookController';
 import { index as cardGroupsIndex } from '@/actions/App/Http/Controllers/CardGroupController';
 import { index as cardsIndex } from '@/actions/App/Http/Controllers/CardController';
 import { edit } from '@/actions/App/Http/Controllers/ProfileController';
@@ -86,10 +86,10 @@ function selectLanguage(event: Event) {
                     Csoportok
                 </Link>
                 <Link
-                    :href="articlesIndex()"
+                    :href="booksIndex()"
                     class="text-sm text-[#706f6c] underline underline-offset-4 hover:text-[#1b1b18] dark:text-[#A1A09A] dark:hover:text-[#EDEDEC]"
                 >
-                    Cikkek
+                    Könyvek
                 </Link>
                 <Link
                     :href="edit()"

@@ -7,6 +7,7 @@ use App\Http\Requests\CardUpdateRequest;
 use App\Models\Card;
 use App\Repositories\Contracts\CardGroupRepositoryInterface;
 use App\Repositories\Contracts\CardRepositoryInterface;
+use App\Repositories\Contracts\CardTypeRepositoryInterface;
 use App\Repositories\Contracts\LanguageRepositoryInterface;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -19,6 +20,7 @@ class CardController extends Controller
         private readonly CardRepositoryInterface $cards,
         private readonly CardGroupRepositoryInterface $cardGroups,
         private readonly LanguageRepositoryInterface $languages,
+        private readonly CardTypeRepositoryInterface $cardTypes,
     ) {}
 
     /**
@@ -36,6 +38,7 @@ class CardController extends Controller
                     'text' => $translation->text,
                 ]),
                 'groups' => $card->groups->pluck('name'),
+                'type' => $card->cardType?->name,
             ]);
 
         return Inertia::render('cards/Index', [
@@ -52,6 +55,7 @@ class CardController extends Controller
         return Inertia::render('cards/Create', [
             'languages' => $this->languages->allOrderedByName(['id', 'code', 'name']),
             'groups' => $this->cardGroups->allOrderedByName(['id', 'name']),
+            'cardTypes' => $this->cardTypes->allOrderedByName(['id', 'name']),
         ]);
     }
 
@@ -60,7 +64,9 @@ class CardController extends Controller
      */
     public function store(CardStoreRequest $request): RedirectResponse
     {
-        $card = $this->cards->create();
+        $card = $this->cards->create([
+            'card_type_id' => $request->validated('card_type_id'),
+        ]);
 
         $this->cards->syncTranslations($card, $request->validated('translations', []));
         $this->cards->syncGroups($card, $request->validated('groups', []));
@@ -82,9 +88,11 @@ class CardController extends Controller
                     fn ($translation) => [$translation->language_id => $translation->text]
                 ),
                 'groupIds' => $card->groups->pluck('id'),
+                'cardTypeId' => $card->card_type_id,
             ],
             'languages' => $this->languages->allOrderedByName(['id', 'code', 'name']),
             'groups' => $this->cardGroups->allOrderedByName(['id', 'name']),
+            'cardTypes' => $this->cardTypes->allOrderedByName(['id', 'name']),
         ]);
     }
 
@@ -93,6 +101,9 @@ class CardController extends Controller
      */
     public function update(CardUpdateRequest $request, Card $card): RedirectResponse
     {
+        $this->cards->update($card, [
+            'card_type_id' => $request->validated('card_type_id'),
+        ]);
         $this->cards->syncTranslations($card, $request->validated('translations', []));
         $this->cards->syncGroups($card, $request->validated('groups', []));
 

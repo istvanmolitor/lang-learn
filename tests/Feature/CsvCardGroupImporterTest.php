@@ -59,6 +59,25 @@ test('it reuses an existing card instead of duplicating it across groups', funct
     expect($dog->groups()->pluck('name')->sort()->values()->all())->toBe(['Pets A', 'Pets B']);
 });
 
+test('it strips the part-of-speech tag from english text and assigns the matching card type', function () {
+    $english = Language::factory()->create(['code' => 'en']);
+    $hungarian = Language::factory()->create(['code' => 'hu']);
+
+    $path = writeImportCsv([
+        ['en', 'hu'],
+        ['ability (n.)', 'képesség'],
+        ['bear (animal) (n.)', 'medve'],
+    ]);
+
+    app(CsvCardGroupImporter::class)->import($path, 'Vocabulary');
+
+    $ability = Card::query()->whereHas('translations', fn ($q) => $q->where('text', 'ability'))->firstOrFail();
+    expect($ability->cardType?->code)->toBe('n');
+
+    $bear = Card::query()->whereHas('translations', fn ($q) => $q->where('text', 'bear (animal)'))->firstOrFail();
+    expect($bear->cardType?->code)->toBe('n');
+});
+
 test('it does not reimport a group that already exists', function () {
     $english = Language::factory()->create(['code' => 'en']);
     $hungarian = Language::factory()->create(['code' => 'hu']);

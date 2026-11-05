@@ -22,7 +22,7 @@ class EloquentCardRepository extends EloquentRepository implements CardRepositor
         $likeSearch = str_replace(['%', '_'], ['\%', '\_'], $search);
 
         return Card::query()
-            ->with(['translations.language', 'groups'])
+            ->with(['translations.language', 'groups', 'cardType'])
             ->when($search !== '', fn ($query) => $query->whereHas(
                 'translations',
                 fn ($translationQuery) => $translationQuery->where('text', 'like', '%'.$likeSearch.'%')
@@ -34,7 +34,7 @@ class EloquentCardRepository extends EloquentRepository implements CardRepositor
 
     public function loadForEdit(Card $card): Card
     {
-        return $card->load(['translations', 'groups']);
+        return $card->load(['translations', 'groups', 'cardType']);
     }
 
     public function syncTranslations(Card $card, array $translations): void

@@ -2,14 +2,14 @@
 
 namespace Database\Factories;
 
-use App\Models\Article;
-use App\Models\Language;
+use App\Models\Book;
+use App\Models\BookPage;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
- * @extends Factory<Article>
+ * @extends Factory<BookPage>
  */
-class ArticleFactory extends Factory
+class BookPageFactory extends Factory
 {
     /**
      * Define the model's default state.
@@ -19,8 +19,8 @@ class ArticleFactory extends Factory
     public function definition(): array
     {
         return [
-            'language_id' => Language::factory(),
-            'title' => fake()->sentence(),
+            'book_id' => Book::factory(),
+            'position' => 0,
         ];
     }
 }

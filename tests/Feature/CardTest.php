@@ -2,6 +2,7 @@
 
 use App\Models\Card;
 use App\Models\CardGroup;
+use App\Models\CardType;
 use App\Models\Language;
 use App\Models\User;
 
@@ -46,6 +47,38 @@ test('blank translations are not stored', function () {
 
     $card = Card::query()->first();
     expect($card->translations()->count())->toBe(1);
+});
+
+test('users can create a card with a type', function () {
+    $user = User::factory()->create();
+    $cardType = CardType::factory()->create();
+
+    $response = $this->actingAs($user)->post(route('cards.store'), [
+        'translations' => [],
+        'groups' => [],
+        'card_type_id' => $cardType->id,
+    ]);
+
+    $response->assertRedirect(route('cards.index'));
+
+    $card = Card::query()->first();
+    expect($card->card_type_id)->toBe($cardType->id);
+});
+
+test('users can change a card type', function () {
+    $user = User::factory()->create();
+    $firstType = CardType::factory()->create();
+    $secondType = CardType::factory()->create();
+    $card = Card::factory()->create(['card_type_id' => $firstType->id]);
+
+    $response = $this->actingAs($user)->put(route('cards.update', $card), [
+        'translations' => [],
+        'groups' => [],
+        'card_type_id' => $secondType->id,
+    ]);
+
+    $response->assertRedirect(route('cards.index'));
+    expect($card->refresh()->card_type_id)->toBe($secondType->id);
 });
 
 test('users can update a card and change its groups', function () {

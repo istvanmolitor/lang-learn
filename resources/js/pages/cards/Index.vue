@@ -12,6 +12,7 @@ type CardListItem = {
     id: number;
     translations: { language_code: string; text: string }[];
     groups: string[];
+    type: string | null;
 };
 
 type PaginationLink = {
@@ -66,12 +67,20 @@ function remove(cardId: number) {
                 >
                     ← Vissza
                 </Link>
-                <Link
-                    :href="create()"
-                    class="text-sm text-[#706f6c] underline underline-offset-4 hover:text-[#1b1b18] dark:text-[#A1A09A] dark:hover:text-[#EDEDEC]"
-                >
-                    + Új kártya
-                </Link>
+                <div class="flex items-center gap-4">
+                    <Link
+                        href="/card-types"
+                        class="text-sm text-[#706f6c] underline underline-offset-4 hover:text-[#1b1b18] dark:text-[#A1A09A] dark:hover:text-[#EDEDEC]"
+                    >
+                        Szófajok
+                    </Link>
+                    <Link
+                        :href="create()"
+                        class="text-sm text-[#706f6c] underline underline-offset-4 hover:text-[#1b1b18] dark:text-[#A1A09A] dark:hover:text-[#EDEDEC]"
+                    >
+                        + Új kártya
+                    </Link>
+                </div>
             </div>
 
             <div
@@ -100,7 +109,9 @@ function remove(cardId: number) {
                         class="flex items-start justify-between gap-4 border-b border-[#e3e3e0] pb-4 last:border-0 last:pb-0 dark:border-[#3E3E3A]"
                     >
                         <div class="flex flex-col gap-1">
-                            <div class="flex flex-wrap gap-3 text-sm">
+                            <div
+                                class="flex flex-wrap items-center gap-3 text-sm"
+                            >
                                 <span
                                     v-for="translation in card.translations"
                                     :key="translation.language_code"
@@ -119,6 +130,12 @@ function remove(cardId: number) {
                                     class="text-[#706f6c] dark:text-[#A1A09A]"
                                 >
                                     Nincs még szöveg.
+                                </span>
+                                <span
+                                    v-if="card.type"
+                                    class="rounded-full bg-[#f5f5f4] px-2 py-0.5 text-xs text-[#706f6c] dark:bg-[#1f1f1d] dark:text-[#A1A09A]"
+                                >
+                                    {{ card.type }}
                                 </span>
                             </div>
                             <div

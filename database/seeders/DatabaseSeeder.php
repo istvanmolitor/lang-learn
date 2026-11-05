@@ -34,7 +34,7 @@ class DatabaseSeeder extends Seeder
         }
 
         $this->call(CardGroupSeeder::class);
-        $this->call(ArticleSeeder::class);
+        $this->call(BookSeeder::class);
         $this->call(OxfordA2Seeder::class);
         $this->call(TopicCardGroupSeeder::class);
     }

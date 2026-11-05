@@ -12,23 +12,23 @@ use Illuminate\Support\Carbon;
 
 /**
  * @property int $id
- * @property int $article_id
+ * @property int $page_id
  * @property int $position
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  */
-#[Fillable(['article_id', 'position'])]
+#[Fillable(['page_id', 'position'])]
 class Paragraph extends Model
 {
     /** @use HasFactory<ParagraphFactory> */
     use HasFactory;
 
     /**
-     * @return BelongsTo<Article, $this>
+     * @return BelongsTo<BookPage, $this>
      */
-    public function article(): BelongsTo
+    public function page(): BelongsTo
     {
-        return $this->belongsTo(Article::class);
+        return $this->belongsTo(BookPage::class, 'page_id');
     }
 
     /**

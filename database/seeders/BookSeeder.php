@@ -2,11 +2,11 @@
 
 namespace Database\Seeders;
 
-use App\Models\Article;
+use App\Models\Book;
 use App\Models\Language;
 use Illuminate\Database\Seeder;
 
-class ArticleSeeder extends Seeder
+class BookSeeder extends Seeder
 {
     /**
      * Run the database seeds.
@@ -20,7 +20,7 @@ class ArticleSeeder extends Seeder
             return;
         }
 
-        $articles = [
+        $books = [
             'A Walk in the Park' => [
                 [
                     ['en' => 'The sun was shining brightly.', 'hu' => 'A nap fényesen sütött.'],
@@ -44,16 +44,18 @@ class ArticleSeeder extends Seeder
             ],
         ];
 
-        foreach ($articles as $title => $paragraphs) {
-            $article = Article::query()->updateOrCreate(
+        foreach ($books as $title => $paragraphs) {
+            $book = Book::query()->updateOrCreate(
                 ['title' => $title],
                 ['language_id' => $english->id],
             );
 
-            $article->paragraphs()->delete();
+            $book->pages()->delete();
+
+            $page = $book->pages()->create(['position' => 0]);
 
             foreach ($paragraphs as $paragraphPosition => $sentences) {
-                $paragraph = $article->paragraphs()->create(['position' => $paragraphPosition]);
+                $paragraph = $page->paragraphs()->create(['position' => $paragraphPosition]);
 
                 foreach ($sentences as $sentencePosition => $translations) {
                     $sentence = $paragraph->sentences()->create([

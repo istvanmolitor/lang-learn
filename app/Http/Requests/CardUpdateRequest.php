@@ -17,6 +17,7 @@ class CardUpdateRequest extends FormRequest
             'translations.*.text' => ['nullable', 'string', 'max:1000'],
             'groups' => ['array'],
             'groups.*' => ['integer', 'exists:card_groups,id'],
+            'card_type_id' => ['nullable', 'integer', 'exists:card_types,id'],
         ];
     }
 }

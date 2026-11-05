@@ -2,7 +2,7 @@
 
 namespace App\Models;
 
-use Database\Factories\ArticleFactory;
+use Database\Factories\BookPageFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -12,23 +12,23 @@ use Illuminate\Support\Carbon;
 
 /**
  * @property int $id
- * @property int $language_id
- * @property string $title
+ * @property int $book_id
+ * @property int $position
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  */
-#[Fillable(['language_id', 'title'])]
-class Article extends Model
+#[Fillable(['book_id', 'position'])]
+class BookPage extends Model
 {
-    /** @use HasFactory<ArticleFactory> */
+    /** @use HasFactory<BookPageFactory> */
     use HasFactory;
 
     /**
-     * @return BelongsTo<Language, $this>
+     * @return BelongsTo<Book, $this>
      */
-    public function language(): BelongsTo
+    public function book(): BelongsTo
     {
-        return $this->belongsTo(Language::class);
+        return $this->belongsTo(Book::class);
     }
 
     /**
@@ -36,6 +36,6 @@ class Article extends Model
      */
     public function paragraphs(): HasMany
     {
-        return $this->hasMany(Paragraph::class)->orderBy('position');
+        return $this->hasMany(Paragraph::class, 'page_id')->orderBy('position');
     }
 }

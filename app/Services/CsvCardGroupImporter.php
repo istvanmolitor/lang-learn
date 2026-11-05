@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Repositories\Contracts\CardGroupRepositoryInterface;
 use App\Repositories\Contracts\CardRepositoryInterface;
+use App\Repositories\Contracts\CardTypeRepositoryInterface;
 use App\Repositories\Contracts\LanguageRepositoryInterface;
 use Illuminate\Support\Facades\DB;
 
@@ -13,6 +14,8 @@ class CsvCardGroupImporter
         private readonly CardRepositoryInterface $cards,
         private readonly CardGroupRepositoryInterface $cardGroups,
         private readonly LanguageRepositoryInterface $languages,
+        private readonly CardTypeRepositoryInterface $cardTypes,
+        private readonly CardTextTypeExtractor $typeExtractor,
     ) {}
 
     /**
@@ -44,9 +47,18 @@ class CsvCardGroupImporter
             ->all();
 
         $englishColumn = array_search('en', $header, true);
+        $cardTypeIdsByCode = $this->cardTypes->allOrderedByName()->pluck('id', 'code');
 
-        DB::transaction(function () use ($handle, $languageIdsByColumn, $englishColumn, $group) {
+        DB::transaction(function () use ($handle, $languageIdsByColumn, $englishColumn, $group, $cardTypeIdsByCode) {
             while (($row = fgetcsv($handle)) !== false) {
+                $cardTypeCode = null;
+
+                if ($englishColumn !== false && filled($row[$englishColumn] ?? null)) {
+                    $extracted = $this->typeExtractor->extract((string) $row[$englishColumn]);
+                    $row[$englishColumn] = $extracted['text'];
+                    $cardTypeCode = $extracted['code'];
+                }
+
                 $translations = [];
 
                 foreach ($languageIdsByColumn as $column => $languageId) {
@@ -66,7 +78,9 @@ class CsvCardGroupImporter
                     $card = $this->cards->findByTranslationText($englishLanguageId, $englishText);
                 }
 
-                $card ??= $this->cards->create();
+                $card ??= $this->cards->create([
+                    'card_type_id' => $cardTypeCode !== null ? $cardTypeIdsByCode->get($cardTypeCode) : null,
+                ]);
 
                 $this->cards->syncTranslations($card, $translations);
                 $this->cardGroups->attachCard($group, $card);

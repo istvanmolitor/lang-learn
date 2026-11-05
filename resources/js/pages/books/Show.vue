@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import { index } from '@/actions/App/Http/Controllers/ArticleController';
+import { index, show } from '@/actions/App/Http/Controllers/BookController';
 import { Head, Link } from '@inertiajs/vue3';
-import { ref } from 'vue';
+import { ref, watch } from 'vue';
 
 type SentenceItem = {
     id: number;
@@ -14,16 +14,25 @@ type ParagraphItem = {
     sentences: SentenceItem[];
 };
 
-defineProps<{
-    article: {
+const props = defineProps<{
+    book: {
         id: number;
         title: string;
         language: string;
-        paragraphs: ParagraphItem[];
+    };
+    paragraphs: ParagraphItem[];
+    pagination: {
+        currentPage: number;
+        lastPage: number;
     };
 }>();
 
 const revealedSentenceIds = ref(new Set<number>());
+
+watch(
+    () => props.pagination.currentPage,
+    () => revealedSentenceIds.value.clear(),
+);
 
 function toggleSentence(sentenceId: number) {
     if (revealedSentenceIds.value.has(sentenceId)) {
@@ -32,10 +41,14 @@ function toggleSentence(sentenceId: number) {
         revealedSentenceIds.value.add(sentenceId);
     }
 }
+
+function pageHref(page: number) {
+    return show(props.book.id, { query: { page } });
+}
 </script>
 
 <template>
-    <Head :title="article.title" />
+    <Head :title="book.title" />
     <div
         class="flex min-h-screen flex-col items-center bg-[#FDFDFC] p-6 text-[#1b1b18] dark:bg-[#0a0a0a]"
     >
@@ -45,23 +58,30 @@ function toggleSentence(sentenceId: number) {
                     :href="index()"
                     class="text-sm text-[#706f6c] underline underline-offset-4 hover:text-[#1b1b18] dark:text-[#A1A09A] dark:hover:text-[#EDEDEC]"
                 >
-                    ← Vissza a cikkekhez
+                    ← Vissza a könyvekhez
                 </Link>
                 <span
                     class="text-xs text-[#706f6c] uppercase dark:text-[#A1A09A]"
                 >
-                    {{ article.language }}
+                    {{ book.language }}
                 </span>
             </div>
 
             <div
                 class="w-full rounded-lg bg-white p-6 shadow-[inset_0px_0px_0px_1px_rgba(26,26,0,0.16)] dark:bg-[#161615] dark:text-[#EDEDEC] dark:shadow-[inset_0px_0px_0px_1px_#fffaed2d]"
             >
-                <h1 class="mb-6 font-medium">{{ article.title }}</h1>
+                <h1 class="mb-6 font-medium">{{ book.title }}</h1>
 
-                <div class="flex flex-col gap-4">
+                <p
+                    v-if="paragraphs.length === 0"
+                    class="text-sm text-[#706f6c] dark:text-[#A1A09A]"
+                >
+                    Ehhez a könyvhöz még nincs szöveg.
+                </p>
+
+                <div v-else class="flex flex-col gap-4">
                     <p
-                        v-for="paragraph in article.paragraphs"
+                        v-for="paragraph in paragraphs"
                         :key="paragraph.id"
                         class="leading-relaxed"
                     >
@@ -85,6 +105,32 @@ function toggleSentence(sentenceId: number) {
                             {{ ' ' }}
                         </template>
                     </p>
+                </div>
+
+                <div
+                    class="mt-6 flex items-center justify-between border-t border-[#e3e3e0] pt-4 dark:border-[#3E3E3A]"
+                >
+                    <Link
+                        v-if="pagination.currentPage > 1"
+                        :href="pageHref(pagination.currentPage - 1)"
+                        class="rounded-sm border border-[#e3e3e0] px-4 py-1.5 text-sm hover:border-[#1b1b18] dark:border-[#3E3E3A] dark:hover:border-[#EDEDEC]"
+                    >
+                        ← Előző oldal
+                    </Link>
+                    <span v-else />
+
+                    <span class="text-sm text-[#706f6c] dark:text-[#A1A09A]">
+                        {{ pagination.currentPage }} / {{ pagination.lastPage }}
+                    </span>
+
+                    <Link
+                        v-if="pagination.currentPage < pagination.lastPage"
+                        :href="pageHref(pagination.currentPage + 1)"
+                        class="rounded-sm border border-[#e3e3e0] px-4 py-1.5 text-sm hover:border-[#1b1b18] dark:border-[#3E3E3A] dark:hover:border-[#EDEDEC]"
+                    >
+                        Következő oldal →
+                    </Link>
+                    <span v-else />
                 </div>
             </div>
         </div>

@@ -2,7 +2,7 @@
 
 namespace Database\Factories;
 
-use App\Models\Article;
+use App\Models\BookPage;
 use App\Models\Paragraph;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
@@ -19,7 +19,7 @@ class ParagraphFactory extends Factory
     public function definition(): array
     {
         return [
-            'article_id' => Article::factory(),
+            'page_id' => BookPage::factory(),
             'position' => 0,
         ];
     }
