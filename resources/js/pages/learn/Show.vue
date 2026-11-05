@@ -9,6 +9,7 @@ type LearnCard = {
     frontLanguage: string | null;
     back: string | null;
     backLanguage: string | null;
+    examples: string[];
 };
 
 const props = defineProps<{
@@ -132,6 +133,27 @@ function answer(difficulty: 'forgot' | 'hard' | 'medium' | 'easy') {
                     >
                         Könnyű
                     </button>
+                </div>
+
+                <div
+                    v-if="card.examples.length"
+                    class="mt-6 border-t border-[#e3e3e0] pt-4 dark:border-[#3E3E3A]"
+                >
+                    <p
+                        class="mb-2 text-xs tracking-wide text-[#706f6c] uppercase dark:text-[#A1A09A]"
+                    >
+                        Példamondatok a könyvekből
+                    </p>
+                    <ul
+                        class="space-y-1.5 text-sm text-[#1b1b18] dark:text-[#EDEDEC]"
+                    >
+                        <li
+                            v-for="(example, index) in card.examples"
+                            :key="index"
+                        >
+                            {{ example }}
+                        </li>
+                    </ul>
                 </div>
             </div>
 

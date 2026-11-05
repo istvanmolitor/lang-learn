@@ -9,6 +9,7 @@ use App\Models\CardGroup;
 use App\Models\User;
 use App\Repositories\Contracts\CardGroupRepositoryInterface;
 use App\Repositories\Contracts\CardReviewRepositoryInterface;
+use App\Repositories\Contracts\SentenceRepositoryInterface;
 use App\Services\SpacedRepetitionScheduler;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Carbon;
@@ -21,6 +22,7 @@ class LearnController extends Controller
     public function __construct(
         private readonly CardGroupRepositoryInterface $cardGroups,
         private readonly CardReviewRepositoryInterface $cardReviews,
+        private readonly SentenceRepositoryInterface $sentences,
     ) {}
 
     /**
@@ -82,11 +84,15 @@ class LearnController extends Controller
     /**
      * Build the front (language being learned) and back (native language) texts for a card.
      *
-     * @return array{id: int, front: string|null, frontLanguage: string|null, back: string|null, backLanguage: string|null}
+     * @return array{id: int, front: string|null, frontLanguage: string|null, back: string|null, backLanguage: string|null, examples: array<int, string>}
      */
     private function cardPayload(Card $card, User $user): array
     {
         $textByLanguageId = $card->translations->pluck('text', 'language_id');
+
+        $examples = $user->selected_language_id
+            ? $this->sentences->examplesForCard($card, $user->selected_language_id)
+            : collect();
 
         return [
             'id' => $card->id,
@@ -94,6 +100,7 @@ class LearnController extends Controller
             'frontLanguage' => $user->selectedLanguage?->name,
             'back' => $textByLanguageId->get($user->language_id),
             'backLanguage' => $user->nativeLanguage?->name,
+            'examples' => $examples->pluck('text')->values()->all(),
         ];
     }
 }

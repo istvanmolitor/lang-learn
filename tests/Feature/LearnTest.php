@@ -5,7 +5,9 @@ use App\Models\Card;
 use App\Models\CardGroup;
 use App\Models\CardReview;
 use App\Models\Language;
+use App\Models\Sentence;
 use App\Models\User;
+use App\Models\Word;
 
 test('guests cannot view the learn page', function () {
     $group = CardGroup::factory()->create();
@@ -36,6 +38,35 @@ test('the learn page shows the card text in the languages the user knows and is 
         ->where('card.frontLanguage', $english->name)
         ->where('card.back', 'kutya')
         ->where('card.backLanguage', $hungarian->name)
+    );
+});
+
+test('the learn page shows example sentences from books that use one of the card words', function () {
+    $english = Language::factory()->create(['code' => 'en']);
+    $hungarian = Language::factory()->create(['code' => 'hu']);
+    $user = User::factory()->create([
+        'language_id' => $hungarian->id,
+        'selected_language_id' => $english->id,
+    ]);
+
+    $group = CardGroup::factory()->create();
+    $card = Card::factory()->create();
+    $card->translations()->create(['language_id' => $english->id, 'text' => 'dog']);
+    $card->groups()->attach($group);
+
+    $word = Word::factory()->create(['word' => 'dog', 'language_id' => $english->id]);
+    $card->words()->attach($word);
+
+    $matchingSentence = Sentence::factory()->create(['text' => 'The dog runs fast.']);
+    $matchingSentence->words()->attach($word);
+
+    $unrelatedSentence = Sentence::factory()->create(['text' => 'Totally unrelated sentence.']);
+
+    $response = $this->actingAs($user)->get(route('card-groups.learn', $group));
+
+    $response->assertInertia(fn ($page) => $page
+        ->component('learn/Show')
+        ->where('card.examples', ['The dog runs fast.'])
     );
 });
 

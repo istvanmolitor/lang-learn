@@ -24,4 +24,12 @@ interface SentenceRepositoryInterface extends RepositoryInterface
      * @return Collection<int, Collection<int, Card>>
      */
     public function cardsBySentenceId(Collection $sentences): Collection;
+
+    /**
+     * Find up to $limit random sentences, in the given language, that use one of the card's
+     * words, via the card_word and sentence_word tables.
+     *
+     * @return Collection<int, Sentence>
+     */
+    public function examplesForCard(Card $card, int $languageId, int $limit = 3): Collection;
 }

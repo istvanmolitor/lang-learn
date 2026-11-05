@@ -41,4 +41,20 @@ class EloquentSentenceRepository extends EloquentRepository implements SentenceR
         return $links->groupBy('sentence_id')
             ->map(fn (Collection $rows) => $rows->map(fn ($row) => $cardsById->get($row->card_id))->filter()->values());
     }
+
+    public function examplesForCard(Card $card, int $languageId, int $limit = 3): Collection
+    {
+        return Sentence::query()
+            ->whereIn('id', function ($query) use ($card, $languageId) {
+                $query->select('sentence_word.sentence_id')
+                    ->from('sentence_word')
+                    ->join('card_word', 'card_word.word_id', '=', 'sentence_word.word_id')
+                    ->join('words', 'words.id', '=', 'sentence_word.word_id')
+                    ->where('card_word.card_id', $card->id)
+                    ->where('words.language_id', $languageId);
+            })
+            ->inRandomOrder()
+            ->limit($limit)
+            ->get();
+    }
 }
