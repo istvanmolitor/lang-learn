@@ -3,10 +3,19 @@ import { index, show } from '@/actions/App/Http/Controllers/BookController';
 import { Head, Link } from '@inertiajs/vue3';
 import { ref, watch } from 'vue';
 
+type CardItem = {
+    id: number;
+    translations: {
+        language_code: string;
+        text: string;
+    }[];
+};
+
 type SentenceItem = {
     id: number;
     text: string;
     translation: string | null;
+    cards: CardItem[];
 };
 
 type ParagraphItem = {
@@ -101,6 +110,25 @@ function pageHref(page: number) {
                                 class="mx-1 text-sm text-[#706f6c] italic dark:text-[#A1A09A]"
                             >
                                 ({{ sentence.translation ?? 'Nincs fordítás.' }})
+                            </span>
+                            <span
+                                v-if="
+                                    revealedSentenceIds.has(sentence.id) &&
+                                    sentence.cards.length > 0
+                                "
+                                class="mx-1 inline-flex flex-wrap gap-1 align-middle"
+                            >
+                                <span
+                                    v-for="card in sentence.cards"
+                                    :key="card.id"
+                                    class="rounded-full border border-[#e3e3e0] px-2 py-0.5 text-xs text-[#706f6c] dark:border-[#3E3E3A] dark:text-[#A1A09A]"
+                                >
+                                    {{
+                                        card.translations
+                                            .map((t) => t.text)
+                                            .join(' – ')
+                                    }}
+                                </span>
                             </span>
                             {{ ' ' }}
                         </template>

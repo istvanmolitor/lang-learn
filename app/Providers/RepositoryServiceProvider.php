@@ -15,6 +15,7 @@ use App\Repositories\Contracts\SentenceRepositoryInterface;
 use App\Repositories\Contracts\SentenceTranslationRepositoryInterface;
 use App\Repositories\Contracts\UserLanguageRepositoryInterface;
 use App\Repositories\Contracts\UserRepositoryInterface;
+use App\Repositories\Contracts\WordRepositoryInterface;
 use App\Repositories\Eloquent\EloquentBookPageRepository;
 use App\Repositories\Eloquent\EloquentBookRepository;
 use App\Repositories\Eloquent\EloquentCardGroupRepository;
@@ -28,6 +29,7 @@ use App\Repositories\Eloquent\EloquentSentenceRepository;
 use App\Repositories\Eloquent\EloquentSentenceTranslationRepository;
 use App\Repositories\Eloquent\EloquentUserLanguageRepository;
 use App\Repositories\Eloquent\EloquentUserRepository;
+use App\Repositories\Eloquent\EloquentWordRepository;
 use Illuminate\Support\ServiceProvider;
 
 class RepositoryServiceProvider extends ServiceProvider
@@ -51,5 +53,6 @@ class RepositoryServiceProvider extends ServiceProvider
         SentenceTranslationRepositoryInterface::class => EloquentSentenceTranslationRepository::class,
         UserLanguageRepositoryInterface::class => EloquentUserLanguageRepository::class,
         UserRepositoryInterface::class => EloquentUserRepository::class,
+        WordRepositoryInterface::class => EloquentWordRepository::class,
     ];
 }

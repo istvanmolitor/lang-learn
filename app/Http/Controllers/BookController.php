@@ -8,6 +8,7 @@ use App\Models\Book;
 use App\Repositories\Contracts\BookPageRepositoryInterface;
 use App\Repositories\Contracts\BookRepositoryInterface;
 use App\Repositories\Contracts\LanguageRepositoryInterface;
+use App\Repositories\Contracts\SentenceRepositoryInterface;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -19,6 +20,7 @@ class BookController extends Controller
         private readonly BookRepositoryInterface $books,
         private readonly LanguageRepositoryInterface $languages,
         private readonly BookPageRepositoryInterface $bookPages,
+        private readonly SentenceRepositoryInterface $sentences,
     ) {}
 
     /**
@@ -81,6 +83,14 @@ class BookController extends Controller
 
         $bookPage = $pages->first();
 
+        $sentences = $bookPage
+            ? $bookPage->paragraphs->flatMap(fn ($paragraph) => $paragraph->sentences)
+            : collect();
+
+        $cardsBySentenceId = $sentences->isNotEmpty()
+            ? $this->sentences->cardsBySentenceId($sentences)
+            : collect();
+
         return Inertia::render('books/Show', [
             'book' => [
                 'id' => $book->id,
@@ -96,6 +106,14 @@ class BookController extends Controller
                         'translation' => $sentence->translations
                             ->firstWhere('language_id', $user->language_id)
                             ?->text,
+                        'cards' => $cardsBySentenceId->get($sentence->id, collect())
+                            ->map(fn ($card) => [
+                                'id' => $card->id,
+                                'translations' => $card->translations->map(fn ($translation) => [
+                                    'language_code' => $translation->language->code,
+                                    'text' => $translation->text,
+                                ]),
+                            ]),
                     ]),
                 ])
                 : [],

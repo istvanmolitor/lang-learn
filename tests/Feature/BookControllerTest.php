@@ -3,9 +3,12 @@
 use App\Jobs\ImportEpubBookJob;
 use App\Models\Book;
 use App\Models\BookPage;
+use App\Models\Card;
+use App\Models\CardTranslation;
 use App\Models\Language;
 use App\Models\Paragraph;
 use App\Models\User;
+use App\Models\Word;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Facades\Storage;
@@ -130,6 +133,30 @@ test('the show page displays one page of paragraphs at a time', function () {
         ->where('paragraphs.0.sentences.0.text', 'Second page sentence.')
         ->where('pagination.currentPage', 2)
         ->where('pagination.lastPage', 2)
+    );
+});
+
+test('the show page lists the cards that share a word with the sentence', function () {
+    $user = User::factory()->create();
+    $english = Language::factory()->create();
+    $book = Book::factory()->create(['language_id' => $english->id]);
+    $page = BookPage::factory()->for($book)->create(['position' => 0]);
+    $paragraph = Paragraph::factory()->for($page, 'page')->create(['position' => 0]);
+    $sentence = $paragraph->sentences()->create(['position' => 0, 'text' => 'I have a dog.']);
+
+    $word = Word::factory()->create(['language_id' => $english->id, 'word' => 'dog']);
+    $sentence->words()->attach($word);
+
+    $card = Card::factory()->create();
+    CardTranslation::factory()->create(['card_id' => $card->id, 'language_id' => $english->id, 'text' => 'dog']);
+    $card->words()->attach($word);
+
+    $response = $this->actingAs($user)->get(route('books.show', $book));
+
+    $response->assertInertia(fn ($page) => $page
+        ->component('books/Show')
+        ->where('paragraphs.0.sentences.0.cards.0.id', $card->id)
+        ->where('paragraphs.0.sentences.0.cards.0.translations.0.text', 'dog')
     );
 });
 

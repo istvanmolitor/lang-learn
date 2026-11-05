@@ -28,6 +28,11 @@ interface CardRepositoryInterface extends RepositoryInterface
     public function syncTranslations(Card $card, array $translations): void;
 
     /**
+     * Save the card's translations' words into the words table and link them to the card.
+     */
+    public function syncWords(Card $card): void;
+
+    /**
      * @param  array<int, int>  $groupIds
      */
     public function syncGroups(Card $card, array $groupIds): void;

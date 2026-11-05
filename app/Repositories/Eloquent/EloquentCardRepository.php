@@ -4,6 +4,7 @@ namespace App\Repositories\Eloquent;
 
 use App\Models\Card;
 use App\Repositories\Contracts\CardRepositoryInterface;
+use App\Services\WordExtractor;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Str;
 
@@ -12,6 +13,10 @@ use Illuminate\Support\Str;
  */
 class EloquentCardRepository extends EloquentRepository implements CardRepositoryInterface
 {
+    public function __construct(
+        private readonly WordExtractor $wordExtractor,
+    ) {}
+
     protected function modelClass(): string
     {
         return Card::class;
@@ -40,6 +45,16 @@ class EloquentCardRepository extends EloquentRepository implements CardRepositor
     public function syncTranslations(Card $card, array $translations): void
     {
         $card->syncTranslations($translations);
+        $this->syncWords($card);
+    }
+
+    public function syncWords(Card $card): void
+    {
+        $wordIds = $card->translations()->get()
+            ->flatMap(fn ($translation) => $this->wordExtractor->extract($translation->text, $translation->language_id))
+            ->unique();
+
+        $card->words()->sync($wordIds);
     }
 
     public function syncGroups(Card $card, array $groupIds): void

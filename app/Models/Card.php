@@ -56,6 +56,14 @@ class Card extends Model
     }
 
     /**
+     * @return BelongsToMany<Word, $this>
+     */
+    public function words(): BelongsToMany
+    {
+        return $this->belongsToMany(Word::class, 'card_word');
+    }
+
+    /**
      * Create, update, or remove the card's translations based on the given rows, one per language.
      *
      * @param  array<int, array{language_id: int, text: string|null}>  $translations

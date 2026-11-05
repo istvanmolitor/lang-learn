@@ -2,6 +2,7 @@
 
 use App\Models\Book;
 use App\Models\Language;
+use App\Models\Word;
 use App\Services\EpubBookImporter;
 use ZipArchive;
 
@@ -123,6 +124,23 @@ test('it splits a long chapter into multiple page-sized chunks without splitting
 
     expect($book->pages->count())->toBeGreaterThan(1);
     expect($book->pages->sum(fn ($page) => $page->paragraphs->count()))->toBe(10);
+});
+
+test('it links each sentence to its lowercased words', function () {
+    $english = Language::factory()->create(['code' => 'en']);
+
+    $path = writeTestEpub('Tokenized Book', [
+        1 => '<p>Cat and dog and bird.</p>',
+    ]);
+
+    $book = app(EpubBookImporter::class)->import($path, 'en');
+    $book->load('pages.paragraphs.sentences.words');
+
+    $sentence = $book->pages[0]->paragraphs[0]->sentences[0];
+
+    expect(Word::query()->where('language_id', $english->id)->count())->toBe(4);
+    expect($sentence->words->pluck('word')->sort()->values()->all())
+        ->toBe(['and', 'bird', 'cat', 'dog']);
 });
 
 test('it does not reimport a book that already exists for the same language', function () {

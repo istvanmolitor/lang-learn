@@ -31,6 +31,7 @@ class EpubBookImporter
         private readonly ParagraphRepositoryInterface $paragraphs,
         private readonly SentenceRepositoryInterface $sentences,
         private readonly LanguageRepositoryInterface $languages,
+        private readonly WordExtractor $wordExtractor,
     ) {}
 
     /**
@@ -107,11 +108,14 @@ class EpubBookImporter
                 ]);
 
                 foreach ($sentenceTexts as $sentencePosition => $sentenceText) {
-                    $this->sentences->create([
+                    $sentence = $this->sentences->create([
                         'paragraph_id' => $paragraph->id,
                         'position' => $sentencePosition,
                         'text' => $sentenceText,
                     ]);
+
+                    $wordIds = $this->wordExtractor->extract($sentenceText, $languageId);
+                    $this->sentences->syncWords($sentence, array_unique($wordIds));
                 }
             }
         }
