@@ -5,6 +5,7 @@ import { index as cardGroupsIndex } from '@/actions/App/Http/Controllers/CardGro
 import { index as cardsIndex } from '@/actions/App/Http/Controllers/CardController';
 import { edit } from '@/actions/App/Http/Controllers/ProfileController';
 import { update } from '@/actions/App/Http/Controllers/SelectedLanguageController';
+import { index as wordsIndex } from '@/actions/App/Http/Controllers/WordController';
 import { Head, Link, router } from '@inertiajs/vue3';
 
 type Language = {
@@ -90,6 +91,12 @@ function selectLanguage(event: Event) {
                     class="text-sm text-[#706f6c] underline underline-offset-4 hover:text-[#1b1b18] dark:text-[#A1A09A] dark:hover:text-[#EDEDEC]"
                 >
                     Könyvek
+                </Link>
+                <Link
+                    :href="wordsIndex()"
+                    class="text-sm text-[#706f6c] underline underline-offset-4 hover:text-[#1b1b18] dark:text-[#A1A09A] dark:hover:text-[#EDEDEC]"
+                >
+                    Szavak
                 </Link>
                 <Link
                     :href="edit()"

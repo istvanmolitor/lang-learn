@@ -8,6 +8,7 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\LearnController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\SelectedLanguageController;
+use App\Http\Controllers\WordController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -36,6 +37,8 @@ Route::middleware('auth')->group(function () {
     Route::post('card-groups/{cardGroup}/learn', [LearnController::class, 'store'])->name('card-groups.learn.answer');
 
     Route::resource('books', BookController::class)->only(['index', 'create', 'store', 'show']);
+
+    Route::resource('words', WordController::class)->only(['index']);
 });
 
 require __DIR__.'/auth.php';

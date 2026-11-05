@@ -3,6 +3,7 @@
 namespace App\Repositories\Contracts;
 
 use App\Models\Word;
+use Illuminate\Pagination\LengthAwarePaginator;
 
 /**
  * @extends RepositoryInterface<Word>
@@ -17,4 +18,12 @@ interface WordRepositoryInterface extends RepositoryInterface
      * @return array<int, int>
      */
     public function resolveIds(int $languageId, array $words): array;
+
+    /**
+     * Paginate words matching the given search term, including their sentence count,
+     * ordered with the most-used words first.
+     *
+     * @return LengthAwarePaginator<int, Word>
+     */
+    public function paginateSearch(string $search, int $perPage = 20): LengthAwarePaginator;
 }

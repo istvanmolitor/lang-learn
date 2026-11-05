@@ -4,6 +4,7 @@ namespace App\Repositories\Eloquent;
 
 use App\Models\Word;
 use App\Repositories\Contracts\WordRepositoryInterface;
+use Illuminate\Pagination\LengthAwarePaginator;
 
 /**
  * @extends EloquentRepository<Word>
@@ -13,6 +14,22 @@ class EloquentWordRepository extends EloquentRepository implements WordRepositor
     protected function modelClass(): string
     {
         return Word::class;
+    }
+
+    /**
+     * @return LengthAwarePaginator<int, Word>
+     */
+    public function paginateSearch(string $search, int $perPage = 20): LengthAwarePaginator
+    {
+        $likeSearch = str_replace(['%', '_'], ['\%', '\_'], $search);
+
+        return Word::query()
+            ->withCount(['sentences', 'cards'])
+            ->when($search !== '', fn ($query) => $query->where('word', 'like', '%'.$likeSearch.'%'))
+            ->orderByDesc('sentences_count')
+            ->orderBy('word')
+            ->paginate($perPage)
+            ->withQueryString();
     }
 
     public function resolveIds(int $languageId, array $words): array
